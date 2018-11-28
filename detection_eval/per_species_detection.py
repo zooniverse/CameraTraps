@@ -12,11 +12,12 @@ from object_detection.utils import per_image_evaluation
 from utils import *
 
 
-det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss_no_deer_and_inat/predictions/'
+#det_folder = '/home/ubuntu/efs/airsim_experiments/train_airsim_only/exported_models/predictions/'
+det_folder='/home/ubuntu/efs/models/train_on_eccv_and_imerit_2/predictions/'
 
-exp_name = 'eccv_train'
+exp_name = 'trans_test'
 detection_file = det_folder + exp_name + '.p'
-db_file = '/ai4efs/databases/caltechcameratraps/eccv_train_and_imerit_2.json'
+db_file = '/home/ubuntu/efs/databases/CaltechCameraTrapsFullAnnotations.json'
 
 def compute_precision_recall_per_cat(detection_file, db_file):
 

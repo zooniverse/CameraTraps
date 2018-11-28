@@ -9,16 +9,14 @@ from analyze_detection import compute_precision_recall
 from analyze_image_detection_one_guess_per_image import compute_precision_recall_with_images
 from analyze_sequence_detection_one_guess_per_sequence import compute_precision_recall_with_sequences
 
-
-det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss_no_deer/predictions/'
-
+det_folder = '/home/ubuntu/efs/models/train_on_eccv_and_imerit_2/predictions/'
+#det_folder = '/home/ubuntu/efs/airsim_experiments/train_cct_and_airsim/exported_models/predictions/'
 #exp_name = 'eccv_train'
-exp_name = 'small_balanced_cct'
+exp_name = 'trans_test'
 detection_file = det_folder + exp_name + '.p'
 
 #db_file = '/ai4efs/databases/caltechcameratraps/eccv_train_and_imerit_2.json'
-db_file = '/ai4efs/databases/caltechcameratraps/CCT_balanced_test_set.json'
-
+db_file = '/home/ubuntu/efs/databases/CaltechCameraTrapsFullAnnotations.json'
 
 
 if __name__ == '__main__':
@@ -35,9 +33,9 @@ if __name__ == '__main__':
     recall_idx = np.argmin([np.abs(x-recall_thresh) for x in seq_recall])
     print('Prec. at ',seq_recall[recall_idx],' recall with sequences: ', seq_prec[recall_idx])
     plt.figure("Precision Recall Curve")
-    plt.plot(recall, prec, 'C0-', label='per object')
-    plt.plot(im_recall, im_prec, 'C1--', label = 'per image')
-    plt.plot(seq_recall, seq_prec, 'C2:', label='per sequence')
+    plt.plot(recall, prec, 'g-', label='per object')
+    plt.plot(im_recall, im_prec, 'b--', label = 'per image')
+    plt.plot(seq_recall, seq_prec, 'r:', label='per sequence')
     plt.xlim([0, 1])
     plt.ylim([0, 1])
     plt.ylabel("Precision")
