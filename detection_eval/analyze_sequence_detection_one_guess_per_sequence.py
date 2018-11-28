@@ -89,9 +89,10 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                 detected_scores[i] = dets['scores'][i]
                 detected_class_labels[i] = dets['labels'][i] - 1
 
-            max_seq_scores.append(np.max(detected_scores))
-            valid_max_scores.append(np.max(detected_scores))
-            box_id = np.argmax(detected_scores)
+            if num_detections > 0:
+                max_seq_scores.append(np.max(detected_scores))
+                valid_max_scores.append(np.max(detected_scores))
+                box_id = np.argmax(detected_scores)
             
             gts = per_image_gts[image_id]
             num_gts = len(gts['bboxes'])
@@ -115,8 +116,9 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                     groundtruth_class_labels[i] = gts['labels'][i] - 1
 
                 ious = np_box_ops.iou(detected_boxes,groundtruth_boxes)
-                if np.max(ious[box_id, :]) < 0.5:
-                    valid_max_scores[-1] = 0
+                if num_detections > 0:
+                    if np.max(ious[box_id, :]) < 0.5:
+                        valid_max_scores[-1] = 0
                 
                 scores, tp_fp_labels, is_class_correctly_detected_in_image = (
                 per_image_eval.compute_object_detection_metrics(
@@ -140,12 +142,17 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
                 seq_num_gts.append(0)
                 seq_detection_labels.append(np.zeros(num_detections, dtype=np.int32))
                 seq_detection_scores.append(detected_scores)
-                valid_max_scores[-1] = 0
+                if num_detections > 0:
+                    valid_max_scores[-1] = 0
 
         seq_detection_label = np.zeros(1, dtype=np.int32)
         seq_detection_score = np.zeros(1, dtype=np.float32)
+        
+        if len(valid_max_scores) > 0:
+            best_score = np.max(valid_max_scores)
+        else:
+            best_score = 0
 
-        best_score = np.max(valid_max_scores)
         if best_score > 0:
             if not is_gt_in_seq:
                 print(is_gt_in_seq)
@@ -168,8 +175,10 @@ def compute_precision_recall_with_sequences(detection_file, db_file,detection_re
         else:
             #print('no valid box')
             seq_detection_label[0] = False
-            seq_detection_score[0] = np.max(max_seq_scores)
-        
+            if len(max_seq_scores) > 0:
+                seq_detection_score[0] = np.max(max_seq_scores)
+            else:
+                seq_detection_score[0] = 0
 
         #if sum(seq_num_gts)>0:
         if is_gt_in_seq:

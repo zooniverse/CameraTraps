@@ -61,8 +61,9 @@ def compute_precision_recall_with_sequences(detection_file, db_file, detection_r
             for image_id in seqs[seq]:
 
                 dets = per_image_detections[image_id]
-                if max(im_id_to_box_scores[image_id]) > conf:
-                    seq_detection_label = True
+                if len(im_id_to_box_scores[image_id]) > 0:
+                    if max(im_id_to_box_scores[image_id]) > conf:
+                        seq_detection_label = True
         
                 gts = per_image_gts[image_id]
                 num_gts = len(gts['bboxes'])

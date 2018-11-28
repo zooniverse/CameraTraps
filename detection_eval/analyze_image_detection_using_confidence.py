@@ -55,8 +55,9 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             if count % 1000 == 0:
                 print(str(count) + ' images complete')
             '''
-            if max(im_id_to_box_scores[image_id]) > conf:
-                im_detection_label = True
+            if len(im_id_to_box_scores[image_id]) > 0:
+                if max(im_id_to_box_scores[image_id]) > conf:
+                    im_detection_label = True
         
             gts = per_image_gts[image_id]
             num_gts = len(gts['bboxes'])

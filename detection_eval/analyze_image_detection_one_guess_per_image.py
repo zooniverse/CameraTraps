@@ -66,10 +66,14 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             detected_scores[i] = dets['scores'][i]
             detected_class_labels[i] = dets['labels'][i] - 1
 
-        max_im_scores.append(np.max(detected_scores))
-        valid_max_scores.append(np.max(detected_scores))
-        box_id = np.argmax(detected_scores)
-            
+        
+        if num_detections > 0:
+            max_im_scores.append(np.max(detected_scores))
+            valid_max_scores.append(np.max(detected_scores))
+            box_id = np.argmax(detected_scores)
+        else:
+            max_im_scores
+
         gts = per_image_gts[image_id]
         num_gts = len(gts['bboxes'])
         im_num_gts = num_gts
@@ -91,8 +95,9 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
                 groundtruth_class_labels[i] = gts['labels'][i] - 1
 
             ious = np_box_ops.iou(detected_boxes,groundtruth_boxes)
-            if np.max(ious[box_id, :]) < 0.5:
-                valid_max_scores[-1] = 0
+            if num_detections > 0:
+                if np.max(ious[box_id, :]) < 0.5:
+                    valid_max_scores[-1] = 0
                 
                 #print('detected animal box')
 
@@ -127,9 +132,14 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
         else:
             im_detection_labels = np.zeros(num_detections, dtype=np.int32)
             im_detection_scores = detected_scores
-            valid_max_scores[-1] = 0
+            if num_detections > 0:
+                valid_max_scores[-1] = 0
 
-        best_score = np.max(valid_max_scores)
+        if len(valid_max_scores) > 0:
+            best_score = np.max(valid_max_scores)
+            #print(valid_max_scores)
+        else:
+            best_score = 0
         im_detection_label = np.zeros(1, dtype=np.int32)
         im_detection_score = np.zeros(1, dtype=np.float32)
         if best_score > 0:
@@ -149,7 +159,10 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
             im_detection_score[0] = best_score
         else: 
             im_detection_label[0] = False
-            im_detection_score[0] = np.max(max_im_scores)
+            if len(max_im_scores) > 0:
+                im_detection_score[0] = np.max(max_im_scores)
+            else:
+                im_detection_score[0] = 0.0
         
         #num_total_gts+=im_num_gts
         

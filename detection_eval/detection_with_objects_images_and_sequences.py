@@ -9,10 +9,10 @@ from analyze_detection import compute_precision_recall
 from analyze_image_detection_one_guess_per_image import compute_precision_recall_with_images
 from analyze_sequence_detection_one_guess_per_sequence import compute_precision_recall_with_sequences
 
-det_folder = '/home/ubuntu/efs/models/train_on_eccv_and_imerit_2/predictions/'
+det_folder = '/home/ubuntu/efs/models/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28/predictions/'
 #det_folder = '/home/ubuntu/efs/airsim_experiments/train_cct_and_airsim/exported_models/predictions/'
 #exp_name = 'eccv_train'
-exp_name = 'trans_test'
+exp_name = 'oneclass_eccv_trans_test'
 detection_file = det_folder + exp_name + '.p'
 
 #db_file = '/ai4efs/databases/caltechcameratraps/eccv_train_and_imerit_2.json'
