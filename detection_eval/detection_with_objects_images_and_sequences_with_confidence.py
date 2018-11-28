@@ -10,13 +10,14 @@ from analyze_image_detection_using_confidence import compute_precision_recall_wi
 from analyze_sequence_detection_using_confidence import compute_precision_recall_with_sequences
 
 
-det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_ss_no_deer/predictions/'
+det_folder = '/home/ubuntu/efs/models/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28/predictions/'
 #exp_name = 'eccv_train'
-exp_name = 'small_balanced_cct'
+exp_name = 'oneclass_eccv_trans_test'
 detection_file = det_folder + exp_name + '.p'
 
 #db_file = '/ai4efs/databases/caltechcameratraps/eccv_train_and_imerit_2.json'
-db_file = '/ai4efs/databases/caltechcameratraps/CCT_balanced_test_set.json'
+#db_file = '/ai4efs/databases/caltechcameratraps/CCT_balanced_test_set.json'
+db_file = '/home/ubuntu/efs/databases/CaltechCameraTrapsFullAnnotations.json'
 
 
 if __name__ == '__main__':
