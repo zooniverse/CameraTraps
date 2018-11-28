@@ -73,8 +73,14 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
 
 
         #calc prec, rec for this confidence thresh
-        im_prec = tp / float(tp + fp)
-        im_rec = tp / float(tp + fn)
+        if tp + fp > 0:
+            im_prec = tp / float(tp + fp)
+        else:
+            im_prec = 0
+        if tp + fn > 0:
+            im_rec = tp / float(tp + fn)
+        else:
+            im_rec  = 0
         prec.append(im_prec)
         rec.append(im_rec)
     

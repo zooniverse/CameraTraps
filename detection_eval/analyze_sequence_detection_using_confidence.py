@@ -80,8 +80,14 @@ def compute_precision_recall_with_sequences(detection_file, db_file, detection_r
 
 
         #calc prec, rec for this confidence thresh
-        seq_prec = tp / float(tp + fp)
-        seq_rec = tp / float(tp + fn)
+        if tp + fp > 0:
+            seq_prec = tp / float(tp + fp)
+        else:
+            seq_prec = 0
+        if tp + fn > 0:
+            seq_rec = tp / float(tp + fn)
+        else:
+            seq_rec = 0
         prec.append(seq_prec)
         rec.append(seq_rec)
     

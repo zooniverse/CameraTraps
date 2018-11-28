@@ -49,9 +49,9 @@ if __name__ == '__main__':
     print('Prec. at ',seq_recall[recall_idx],' recall with sequences: ', seq_prec[recall_idx])
 
     plt.figure("Precision Recall Curve")
-    plt.plot(recall, prec, 'C0-', label='per object')
-    plt.plot(im_recall, im_prec, 'C1--', label = 'per image')
-    plt.plot(seq_recall, seq_prec, 'C2:', label='per sequence')
+    plt.plot(recall, prec, 'g-', label='per object')
+    plt.plot(im_recall, im_prec, 'b--', label = 'per image')
+    plt.plot(seq_recall, seq_prec, 'r:', label='per sequence')
     plt.xlim([0, 1])
     plt.ylim([0, 1])
     plt.ylabel("Precision")
@@ -61,4 +61,4 @@ if __name__ == '__main__':
     plt.savefig(det_folder + exp_name +'_PR_obj_im_seq_w_conf.jpg')
 
     np.savez(det_folder + exp_name + '_obj_im_seq_prec_recall_data_with_conf.npz', prec=prec, recall=recall, ap=ap, im_prec=im_prec, im_recall=im_recall, im_ap=im_ap, seq_prec=seq_prec, seq_recall=seq_recall, seq_ap=seq_ap)
-
+    
