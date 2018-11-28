@@ -58,7 +58,7 @@ def read_from_tfrecords(data_path, features_to_extract):
 
 def parse_args():
 
-    parser = argparse.ArgumentParser(description = 'Make tfrecords from a CCT style json file')
+    parser = argparse.ArgumentParser(description = 'Make detection pickle file from tfrecord file returned by TFODAPI infer_detections.py')
 
     parser.add_argument('--input_tfrecord_file', dest='input_tfrecord_file',
                          help='Path to detection tfrecords',
