@@ -11,7 +11,7 @@ import argparse
 
 # from create_tfrecords_py3 import create
 from create_tfrecords import create
-from create_tfrecords_format import create_tfrecords_format
+from create_tfrecords_format import *
 
 
 def make_tfrecords_from_json(input_json_file, output_tfrecords_folder, image_file_root, dataset_name, num_threads=5,ims_per_record=200): 

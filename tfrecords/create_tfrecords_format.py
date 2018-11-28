@@ -16,25 +16,25 @@ from tqdm import tqdm
 # Configurations and paths
 
 # eMammal
-coordinates_relative = True  # are the coordinates in bbox specification relative
-cat_to_ignore = ['empty'] # ['person', 'empty']
+#coordinates_relative = True  # are the coordinates in bbox specification relative
+#cat_to_ignore = ['empty'] #['person', 'empty']
 # iMerit label for human is 'person'; 'empty' is not valid either as a bbox category,
 # but we actually rely on the image level label 'empty' to determine if an image is empty
 
-exclude_images_without_bbox = True  # to exclude images without bbox annotations in the resulting json?
+#exclude_images_without_bbox = True  # to exclude images without bbox annotations in the resulting json?
 # for eMammal, since all images whether sent for annotation or not are included in the DB,
 # this flag needs to be True. Images that have been determined to be empty will be dealt
 # with in the for loop over annotations
 
-image_file_root = '/datadrive/emammal/'
-database_file = '/home/yasiyu/yasiyu_temp/eMammal_db/eMammal_20180929.json'
+#image_file_root = '/datadrive/emammal/'
+#database_file = '/home/yasiyu/yasiyu_temp/eMammal_db/eMammal_20180929.json'
 
 
 # Snapshot Serengeti and iWildCam
-# coordinate_relative = False
-# cat_to_exclude = ['empty', 'car']
-# exclude_images_without_bbox = False
-# is_one_class = False
+coordinates_relative = False
+cats_to_ignore = ['empty', 'car']
+exclude_images_without_bbox = False
+is_one_class = False
 
 # datafolder = '/teamscratch/findinganimals/data/iWildCam2018/'
 # datafile = 'eccv_18_annotation_files_oneclass/CaltechCameraTrapsECCV18'
@@ -49,7 +49,7 @@ database_file = '/home/yasiyu/yasiyu_temp/eMammal_db/eMammal_20180929.json'
 # cat_to_ignore = ['empty', 'car']
 
 
-def create_tfrecords_format(database_file, image_file_root):
+def create_tfrecords_format(database_file, image_file_root,coordinate_relative = False,cat_to_exclude = ['empty'],exclude_images_without_bbox = False,is_one_class = False ):
     print('Loading database...')
     with open(database_file, 'r') as f:
         data = json.load(f)
