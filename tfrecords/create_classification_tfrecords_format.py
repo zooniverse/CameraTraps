@@ -52,10 +52,12 @@ def create_classification_tfrecords_format(database_file,image_file_root):
         image_data['filename'] = image_file_root+im['file_name']
         
         image_data['id'] = im['id']
-        image_data['seq_id'] = im['seq_id']
-        image_data['seq_num_frames'] = im['seq_num_frames']
-        image_data['frame_num'] = im['frame_num']
-        image_data['location'] = im['location']
+        if 'seq_id' in im:
+            image_data['seq_id'] = im['seq_id']
+            image_data['seq_num_frames'] = im['seq_num_frames']
+            image_data['frame_num'] = im['frame_num']
+        if 'location' in im:
+            image_data['location'] = im['location']
         if 'date_captured' in image_data:
             image_data['date_captured'] = im['date_captured']
         image_data['class'] = {}

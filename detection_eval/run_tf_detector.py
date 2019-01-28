@@ -60,7 +60,7 @@ def generate_detections(detection_graph,images):
     if not isinstance(images,list):
         images = [images]
     else:
-        images = images.copy()
+        images = [i for i in images]
 
     # Load images if they're not already numpy arrays
     for iImage,image in enumerate(images):
@@ -194,9 +194,12 @@ def render_bounding_boxes(boxes,scores,classes,inputFileNames,outputFileNames=[]
 
 #%% Test driver
 
-MODEL_FILE = r'd:\temp\models\frozen_inference_graph.pb'
-TARGET_IMAGES = [r'd:\temp\test_images\d16558s6i1.jpg',r'D:\temp\test_images\d16558s1i6.jpg']
+import os
 
+MODEL_FILE = '/home/ubuntu/efs/models/megadetector/frozen_inference_graph.pb'
+IMAGE_FOLDER = '/home/ubuntu/efs/empty_cct_images/images'
+TARGET_IMAGES = [IMAGE_FOLDER+'/'+i for i in os.listdir(IMAGE_FOLDER)[:5]]
+OUTPUT_FILE = '/home/ubuntu/efs/empty_cct_images/detected_boxes.json'
 # Load and run detector on target images
 detection_graph = load_model(MODEL_FILE)
 
@@ -211,6 +214,10 @@ inputFileNames = TARGET_IMAGES
 outputFileNames=[]
 confidenceThreshold=0.9
 
-plt.ioff()
+if RENDER_BOXES:
+    plt.ioff()
 
-render_bounding_boxes(boxes, scores, classes, TARGET_IMAGES)
+    render_bounding_boxes(boxes, scores, classes, TARGET_IMAGES)
+
+if EXPORT_BOXES:
+    json.dump({'boxes':boxes,'scores':scores,'classes':classes,'images':images},open(OUTPUT_FILE,'w'))
