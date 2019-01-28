@@ -49,7 +49,6 @@ def get_results_per_image(dets, gts, per_image_eval):
        
     num_gts = len(gts['bboxes'])
     if num_gts > 0:
-
         # [ymin, xmin, ymax, xmax] in absolute image coordinates
         groundtruth_boxes = np.zeros([num_gts, 4], dtype=np.float32)
         # 0-indexed groundtruth classes for the boxes
@@ -78,7 +77,7 @@ def get_results_per_image(dets, gts, per_image_eval):
                     groundtruth_masks=groundtruth_masks
             )
         )
-
+        
         scores = scores[0]
         tp_fp_labels = tp_fp_labels[0]
 

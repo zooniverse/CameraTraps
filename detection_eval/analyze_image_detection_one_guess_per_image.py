@@ -12,7 +12,7 @@ from utils import *
 
 det_folder = '/ai4efs/models/object_detection/faster_rcnn_inception_resnet_v2_atrous/train_on_eccv_18_only/predictions/'
 
-def compute_precision_recall_with_images(detection_file, detection_results=None,images_to_consider='all', get_night_day = None):
+def compute_precision_recall_with_images(detection_file, detection_results=None,images_to_consider='all', get_night_day = None, per_image_eval=None):
     
     if detection_results == None:
         print('Loading detection file...')
@@ -26,12 +26,13 @@ def compute_precision_recall_with_images(detection_file, detection_results=None,
 
     per_image_detections, per_image_gts = cluster_detections_by_image(detection_results, use_im)
 
-    per_image_eval = per_image_evaluation.PerImageEvaluation(
-        num_groundtruth_classes=1,
-        matching_iou_threshold=0.5,
-        nms_iou_threshold=1.0,
-        nms_max_output_boxes=10000
-    )
+    if per_image_eval == None:
+        per_image_eval = per_image_evaluation.PerImageEvaluation(
+            num_groundtruth_classes=1,
+            matching_iou_threshold=0.5,
+            nms_iou_threshold=1.0,
+            nms_max_output_boxes=10000
+        )
     
     print('Running per-image analysis...')
 

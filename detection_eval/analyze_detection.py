@@ -12,7 +12,7 @@ from utils import *
 
 det_folder = '/data/experiments/object_detection/inception_resnet_v2_atrous/exported_125883/predictions/'
 
-def compute_precision_recall(detection_file, detection_results=None,images_to_consider='all', get_night_day = None):
+def compute_precision_recall(detection_file, detection_results=None,images_to_consider='all', get_night_day = None, per_image_eval=None):
     
     if detection_results == None:
         print('Loading detection file...')
@@ -27,13 +27,15 @@ def compute_precision_recall(detection_file, detection_results=None,images_to_co
     use_im = get_images_to_consider(detection_results, images_to_consider, get_night_day)
 
     per_image_detections, per_image_gts = cluster_detections_by_image(detection_results, use_im)
+    
+    if per_image_eval == None:
 
-    per_image_eval = per_image_evaluation.PerImageEvaluation(
-        num_groundtruth_classes=1,
-        matching_iou_threshold=0.5,
-        nms_iou_threshold=1.0,
-        nms_max_output_boxes=10000
-    )
+        per_image_eval = per_image_evaluation.PerImageEvaluation(
+            num_groundtruth_classes=1,
+            matching_iou_threshold=0.5,
+            nms_iou_threshold=1.0,
+            nms_max_output_boxes=10000
+        )
     
     print('Running per-object analysis...')
 
