@@ -6,6 +6,7 @@
 # 
 
 import json
+import random
 import pickle
 import numpy as np
 from create_tfrecords import create
@@ -14,24 +15,15 @@ from create_classification_tfrecords_format import create_classification_tfrecor
 import tensorflow as tf
 
 output_dir = '/home/ubuntu/efs/eccv_cct_tfrecords/multiclass/'
-database_file = '/home/ubuntu/cct_data/eccv_18_annotation_files/'
+database_folder = '/home/ubuntu/cct_data/eccv_18_annotation_files/'
 #output_dir = '/ss_data/tfrecords'
 image_file_root = '/home/ubuntu/cct_data/cct_images/'
 experiment_type = 'detection'
 ims_per_record = 500.0
 num_threads = 5
 
-
-if 'tfrecord_format' in database_file:
-    with open(database_file,'r') as f:
-        data = json.load(f)
-else:
-    print('Creating tfrecords format database')
-    if experiment_type == 'classification'
-        data = create_classification_tfrecords_format(database_file, image_file_root)
-        json.dump(data,open('/ai4efs/databases/snapshotserengeti/oneclass/SnapshotSerengeti_Seasons_1_to_4_tfrecord_format.json','w'))
-    else:
-        data = create_tfrecords_format(database_file, image_file_root)
+'''
+data = create_tfrecords_format(database_file, image_file_root)
 
 print('Images: ',len(data))
 print(data[0])
@@ -43,33 +35,11 @@ trans_val = [i for i in data_split['val_ims'] if i in im_id_to_im]
 trans_test = [i for i in data_split['test_ims'] if i in im_id_to_im]
 
 print('train: ', len(train), ', val: ', len(trans_val), ' test: ', len(trans_test) )
-
-print('Creating train tfrecords')
-#dataset = json.load(open('/ai4efs/databases/snapshotserengeti/oneclass/SnapshotSerengeti_Seasons_1_to_4_tfrecord_format_valid_ims.json','r'))
-
-dataset = [im_id_to_im[idx] for idx in trans_val]
-
-invalid_jpeg = []
-valid_dataset = []
-for im in dataset:
-    fn = im['filename']
-    try:
-        with tf.Graph().as_default():
-            image_contents = tf.read_file(fn)
-            image = tf.image.decode_jpeg(image_contents, channels=3)
-            init_op = tf.initialize_all_tables()
-            with tf.Session() as sess:
-                sess.run(init_op)
-                tmp = sess.run(image)
-    except:
-        invalid_jpeg.append(im['id'])
-        continue
-    valid_dataset.append(im)
-print(len(valid_dataset))
-
-json.dump(valid_dataset, open('/ai4efs/databases/snapshotserengeti/oneclass/SnapshotSerengeti_Seasons_1_to_4_tfrecord_format_valid_ims_val.json','w'))
-
 '''
+print('Creating train tfrecords')
+database_file = database_folder+'train_annotations.json'
+dataset = create_tfrecords_format(database_file, image_file_root)
+random.shuffle(dataset)
 print(dataset[0])
 num_shards = int(np.ceil(float(len(dataset))/ims_per_record))
 while num_shards % num_threads:
@@ -83,10 +53,12 @@ failed_images = create(
   num_threads=num_threads,
   store_images=True
 )
-'''
-'''
+
 print('Creating cis_val tfrecords')
-dataset = [im_id_to_im[idx] for idx in cis_val]
+#dataset = [im_id_to_im[idx] for idx in cis_val]
+database_file = database_folder+'cis_val_annotations.json'
+dataset = create_tfrecords_format(database_file, image_file_root)
+random.shuffle(dataset)
 num_shards = int(np.ceil(float(len(dataset))/ims_per_record))
 while num_shards % num_threads:
     num_shards += 1
@@ -98,11 +70,13 @@ failed_images = create(
   num_threads=5,
   store_images=True
 )
-'''
 
-#print('Creating trans_val tfrecords')
+
+print('Creating trans_val tfrecords')
 #dataset = [im_id_to_im[idx] for idx in trans_val]
-dataset = valid_dataset
+database_file = database_folder+'trans_val_annotations.json'
+dataset = create_tfrecords_format(database_file, image_file_root)
+random.shuffle(dataset)
 num_shards = int(np.ceil(float(len(dataset))/ims_per_record))
 while num_shards % num_threads:
     num_shards += 1
@@ -115,9 +89,12 @@ failed_images = create(
   store_images=True
 )
 
-'''
+
 print('Creating cis_test tfrecords')
-dataset = [im_id_to_im[idx] for idx in cis_test]
+#dataset = [im_id_to_im[idx] for idx in cis_test]
+database_file = database_folder+'cis_test_annotations.json'
+dataset = create_tfrecords_format(database_file, image_file_root)
+random.shuffle(dataset)
 num_shards = int(np.ceil(float(len(dataset))/ims_per_record))
 while num_shards % num_threads:
     num_shards += 1
@@ -129,10 +106,12 @@ failed_images = create(
   num_threads=5,
   store_images=True
 )
-'''
-'''
+
 print('Creating trans_test tfrecords')
-dataset = [im_id_to_im[idx] for idx in trans_test]
+#dataset = [im_id_to_im[idx] for idx in trans_test]
+database_file = database_folder+'trans_test_annotations.json'
+dataset = create_tfrecords_format(database_file, image_file_root)
+random.shuffle(dataset)
 num_shards = int(np.ceil(float(len(dataset))/ims_per_record))
 while num_shards % num_threads:
     num_shards += 1
@@ -144,5 +123,5 @@ failed_images = create(
   num_threads=5,
   store_images=True
 )
-'''
+
 

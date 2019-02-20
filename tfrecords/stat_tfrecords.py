@@ -136,6 +136,7 @@ def verify_bboxes(tfrecords):
     images_with_small_bboxes = set()
     images_with_reversed_coords = set()
     images_with_bbox_count_mismatch = set()
+    images_with_large_bboxes = set()
 
     coord = tf.train.Coordinator()
     with tf.Session() as sess:
@@ -180,7 +181,9 @@ def verify_bboxes(tfrecords):
                     # Too small of an area?
                     if w * h < 10:
                         images_with_small_bboxes.add(img_id)
-
+                    # Larger than the image?
+                    if x2 > 1 or y2 > 1:
+                        images_with_large_bboxes.add(img_id)
                     bbox_widths.append(w)
                     bbox_heights.append(h)
 
@@ -198,6 +201,12 @@ def verify_bboxes(tfrecords):
     #for img_id in images_with_small_bboxes:
     #    print(img_id)
     print()
+
+    print("Found %d images with large bboxes" % (len(images_with_large_bboxes),))
+    #print("Images with areas < 10:")
+    #for img_id in images_with_small_bboxes:
+    #    print(img_id)
+    print()  
     print("Found %d images with reversed coordinates" %
           (len(images_with_reversed_coords),))
     #print("Images with reversed coordinates:")

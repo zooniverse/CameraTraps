@@ -56,8 +56,8 @@ def create_tfrecords_format(database_file, image_file_root,coordinate_relative =
 
     images = data['images']
     annotations = data['annotations']
-    categories = data['categories']
-
+    #categories = data['categories']
+    categories = json.load(open('eccv_categories.json','r'))
     print('Images: ', len(images))
     print('Annotations: ', len(annotations))
     print('Categories: ', len(categories))
@@ -69,10 +69,14 @@ def create_tfrecords_format(database_file, image_file_root,coordinate_relative =
     # need consecutive category ids
     valid_cats = [cat for cat in categories if cat['name'] not in cats_to_ignore]
     print(valid_cats)
-    old_cat_id_to_new_cat_id = {valid_cats[idx]['id']:idx+1 for idx in range(len(valid_cats))}
+    if is_one_class:
+        old_cat_id_to_new_cat_id = {valid_cats[idx]['id']:1 for idx in range(len(valid_cats))}
+        cat_id_to_cat_name = {cat['id']: 'animal' for cat in categories}
+    else:
+        old_cat_id_to_new_cat_id = {valid_cats[idx]['id']:idx+1 for idx in range(len(valid_cats))}
+        cat_id_to_cat_name = {cat['id']: cat['name'] for cat in categories}
     print(old_cat_id_to_new_cat_id)
-    cat_id_to_cat_name = {cat['id']: cat['name'] for cat in categories}
-
+    
     im_id_to_anns = {im['id']: [] for im in images}
 
     for ann in annotations:
