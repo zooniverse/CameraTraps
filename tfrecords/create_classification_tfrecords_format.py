@@ -20,13 +20,14 @@ datafolder = '/datadrive/snapshotserengeti/'
 database_file = datafolder+'databases/oneclass/imerit_ss_annotations_1.json'
 image_file_root = datafolder+'images/'
 
-def create_classification_tfrecords_format(database_file,image_file_root):
+def create_classification_tfrecords_format(database_file,image_file_root, category_file):
     with open(database_file,'r') as f:
         data = json.load(f)
 
     images = data['images']
     annotations = data['annotations']
-    categories = data['categories']
+    categories = json.load(open(category_file,'r'))
+#    categories = data['categories']
 
     print('Images: ', len(images))
     print('Annotations: ', len(annotations))
@@ -37,8 +38,8 @@ def create_classification_tfrecords_format(database_file,image_file_root):
 
     im_id_to_im = {im['id']:im for im in images}
     #need consecutive category ids
-    #old_cat_id_to_new_cat_id = {categories[idx]['id']:idx+1 for idx in range(len(categories))}
-    #print(old_cat_id_to_new_cat_id)
+    old_cat_id_to_new_cat_id = {categories[idx]['id']:idx+1 for idx in range(len(categories))}
+    print(old_cat_id_to_new_cat_id)
     cat_id_to_cat_name = {cat['id']:cat['name'] for cat in categories}
     im_id_to_anns = {im['id']:[] for im in images}
     for ann in annotations: 

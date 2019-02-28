@@ -14,13 +14,13 @@ from create_tfrecords import create
 from create_tfrecords_format import *
 
 
-def make_tfrecords_from_json(input_json_file, output_tfrecords_folder, image_file_root, dataset_name, num_threads=5,ims_per_record=200,is_one_class=False): 
+def make_tfrecords_from_json(input_json_file, output_tfrecords_folder, image_file_root, dataset_name, num_threads=5,ims_per_record=200,is_one_class=False,category_file='eccv_categories.json'): 
     #check if the input file has already been converted to the tfrecords format, if not, convert
     if 'tfrecord_format' in input_json_file:
         with open(database_file,'r') as f:
             dataset = json.load(f)
     else:
-        dataset = create_tfrecords_format(input_json_file, image_file_root,is_one_class=is_one_class)
+        dataset = create_tfrecords_format(input_json_file, image_file_root,is_one_class=is_one_class,category_file=category_file)
 
     print('Images: ',len(dataset))
 
@@ -68,6 +68,10 @@ def parse_args():
                          help='Should the tfrecords be a oneclass version?',
                          action='store_true', default=False)
 
+    parser.add_argument('--category_file', dest='category_file',
+                         help='category_file map to use',
+                         type=str, required=False,default = 'eccv_categories.json')
+
     args = parser.parse_args()
 
     return args
@@ -77,8 +81,7 @@ def main():
 
     make_tfrecords_from_json(args.input_json_file, args.output_tfrecords_folder, args.image_file_root,
                              args.dataset_name, num_threads=args.num_threads,
-                             ims_per_record=args.ims_per_record,is_one_class=args.is_one_class)
-
+                             ims_per_record=args.ims_per_record,is_one_class=args.is_one_class, category_file=args.category_file)
 
 if __name__ == '__main__':
     main()

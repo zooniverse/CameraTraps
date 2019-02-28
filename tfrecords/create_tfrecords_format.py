@@ -49,7 +49,7 @@ is_one_class = False
 # cat_to_ignore = ['empty', 'car']
 
 
-def create_tfrecords_format(database_file, image_file_root,coordinate_relative = False,cat_to_exclude = ['empty'],exclude_images_without_bbox = False,is_one_class = False ):
+def create_tfrecords_format(database_file, image_file_root,coordinate_relative = False,cat_to_exclude = ['empty'],exclude_images_without_bbox = False,is_one_class = False,category_file='eccv_categories.json' ):
     print('Loading database...')
     with open(database_file, 'r') as f:
         data = json.load(f)
@@ -57,7 +57,7 @@ def create_tfrecords_format(database_file, image_file_root,coordinate_relative =
     images = data['images']
     annotations = data['annotations']
     #categories = data['categories']
-    categories = json.load(open('eccv_categories.json','r'))
+    categories = json.load(open(category_file,'r'))
     print('Images: ', len(images))
     print('Annotations: ', len(annotations))
     print('Categories: ', len(categories))
