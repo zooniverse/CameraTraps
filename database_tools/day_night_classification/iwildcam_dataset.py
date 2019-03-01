@@ -10,7 +10,7 @@ import os
 import xml.etree.ElementTree as ET
 import numpy as np
 import json
-from .util import read_image
+from util import read_image
 import PIL
 
 
