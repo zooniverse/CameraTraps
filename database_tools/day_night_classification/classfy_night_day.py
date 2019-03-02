@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 import json
 
-from data.iwildcam_dataset import IWildCamBboxDataset
+from iwildcam_dataset import IWildCamBboxDataset
 
 def clasifyDayNightImage(img):
     m = np.mean(img, axis=(0,1)) # take the mean over the 2d image
@@ -41,10 +41,10 @@ def clasifyDayNight(imageDir, files):
 
 if __name__ == '__main__':    
     
-    dataRoot = 'E:/Research/Images/CaltechCameraTraps/'
-    annFile = dataRoot + 'eccv_18_annotation_files/train_annotations.json'
-    dataDir = dataRoot + 'eccv_18_images_only/'
-    nightdayFile = 'eccv_18_train_nightday.json'
+    dataRoot = '/home/ubuntu/efs/'
+    annFile = dataRoot + 'databases/Corrected_versions/CaltechCameraTraps_v2.json'
+    dataDir = dataRoot + 'data/lila_cct_images/cct_images/'
+    nightdayFile = '/home/ubuntu/efs/databases/Corrected_vesions/cct_nightday.json'
 
     data = IWildCamBboxDataset(dataDir, annFile)   
     files = data.get_files()

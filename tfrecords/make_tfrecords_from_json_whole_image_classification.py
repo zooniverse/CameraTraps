@@ -14,13 +14,13 @@ from create_tfrecords import create
 from create_classification_tfrecords_format import *
 
 
-def make_tfrecords_from_json(input_json_file, output_tfrecords_folder, image_file_root, dataset_name, num_threads=5,ims_per_record=200): 
-    #check if the input file has already been converted to the tfrecords format, if not, convert
+def make_tfrecords_from_json(input_json_file, output_tfrecords_folder, image_file_root, dataset_name, num_threads=5,ims_per_record=200,category_file='eccv_categories.json'):
+     #check if the input file has already been converted to the tfrecords format, if not, convert
     if 'tfrecord_format' in input_json_file:
         with open(database_file,'r') as f:
             dataset = json.load(f)
     else:
-        dataset = create_classification_tfrecords_format(input_json_file, image_file_root)
+        dataset = create_classification_tfrecords_format(input_json_file, image_file_root, category_file)
 
     print('Images: ',len(dataset))
 
@@ -65,6 +65,10 @@ def parse_args():
                          help='Number of images to store in each tfrecord file',
                          type=int, default=200)
 
+    parser.add_argument('--category_file', dest='category_file',
+                         help='category map file',
+                         type=str, required=False, default='eccv_categories.json')
+
     args = parser.parse_args()
 
     return args
@@ -73,7 +77,7 @@ def main():
     args = parse_args()
 
     make_tfrecords_from_json(args.input_json_file, args.output_tfrecords_folder, args.image_file_root,
-                             args.dataset_name, args.num_threads,args.ims_per_record)
+                             args.dataset_name, num_threads=args.num_threads,ims_per_record=args.ims_per_record,category_file=args.category_file)
 
 
 if __name__ == '__main__':
