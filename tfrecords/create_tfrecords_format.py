@@ -33,7 +33,7 @@ from tqdm import tqdm
 # Snapshot Serengeti and iWildCam
 coordinates_relative = False
 cats_to_ignore = ['empty', 'car']
-exclude_images_without_bbox = False
+exclude_images_without_bbox = True
 is_one_class = False
 
 # datafolder = '/teamscratch/findinganimals/data/iWildCam2018/'
@@ -49,7 +49,7 @@ is_one_class = False
 # cat_to_ignore = ['empty', 'car']
 
 
-def create_tfrecords_format(database_file, image_file_root,coordinate_relative = False,cat_to_exclude = ['empty'],exclude_images_without_bbox = False,is_one_class = False,category_file='eccv_categories.json' ):
+def create_tfrecords_format(database_file, image_file_root,coordinate_relative = False,cat_to_exclude = ['empty'],exclude_images_without_bbox = True,is_one_class = False,category_file='eccv_categories.json' ):
     print('Loading database...')
     with open(database_file, 'r') as f:
         data = json.load(f)
@@ -95,8 +95,8 @@ def create_tfrecords_format(database_file, image_file_root,coordinate_relative =
         if exclude_images_without_bbox:
             if len(im_id_to_anns[im['id']]) < 1:
                 # but do include all images that are labeled "empty" (whether annotated or not)
-                if im['label'] != 'empty':
-                    continue
+                #if im['label'] != 'empty':
+                continue
             else:
                 num_img_with_anno += 1
 

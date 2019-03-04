@@ -44,7 +44,7 @@ if __name__ == '__main__':
     dataRoot = '/home/ubuntu/efs/'
     annFile = dataRoot + 'databases/Corrected_versions/CaltechCameraTraps_v2.json'
     dataDir = dataRoot + 'data/lila_cct_images/cct_images/'
-    nightdayFile = '/home/ubuntu/efs/databases/Corrected_vesions/cct_nightday.json'
+    nightdayFile = '/home/ubuntu/efs/databases/Corrected_versions/cct_nightday.json'
 
     data = IWildCamBboxDataset(dataDir, annFile)   
     files = data.get_files()
