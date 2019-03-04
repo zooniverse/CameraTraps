@@ -59,6 +59,7 @@ class ResultsLoader():
                 labels.append(database.im_id_to_ann[idx]['category_id'])
 
             else:
+                
                 labels.append(database.ann_id_to_ann[idx]['category_id'])
 
         self.labels = np.asarray(labels)
