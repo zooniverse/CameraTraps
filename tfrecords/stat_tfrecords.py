@@ -10,6 +10,7 @@ from __future__ import print_function
 import argparse
 import numpy as np
 import tensorflow as tf
+import json
 
 def class_stats(tfrecords):
     """
@@ -236,18 +237,70 @@ def verify_bboxes(tfrecords):
     print("Max height: %d" % (np.max(bbox_heights),))
     print("Min height: %d" % (np.min(bbox_heights),))
 
+def get_image_list(tfrecords,output_json_file):
+
+    filename_queue = tf.train.string_input_producer(
+        tfrecords,
+        num_epochs=1
+    )
+
+    # Construct a Reader to read examples from the .tfrecords file
+    reader = tf.TFRecordReader()
+    _, serialized_example = reader.read(filename_queue)
+
+    features = tf.parse_single_example(
+        serialized_example,
+        features={
+            'image/id' : tf.FixedLenFeature([], tf.string),
+        }
+    )
+
+    image_id = features['image/id']
+
+    fetches = [image_id]
+
+    image_ids = []
+
+    coord = tf.train.Coordinator()
+    with tf.Session() as sess:
+
+        tf.global_variables_initializer().run()
+        tf.local_variables_initializer().run()
+        tf.train.start_queue_runners(sess=sess, coord=coord)
+
+        try:
+
+            while not coord.should_stop():
+
+                outputs = sess.run(fetches)
+
+                img_id = outputs[0]
+                image_ids.append(img_id)
+
+
+        except tf.errors.OutOfRangeError as e:
+            pass
+
+    with open(output_json_file,'w') as f:
+        json.dump(image_ids, f)
+
+
 
 def parse_args():
 
     parser = argparse.ArgumentParser(description='Basic statistics on tfrecord files')
 
     parser.add_argument('--stat', dest='stat_type',
-                        choices=['class_stats', 'verify_bboxes'],
+                        choices=['class_stats', 'verify_bboxes','get_image_list'],
                         required=True)
 
     parser.add_argument('--tfrecords', dest='tfrecords',
                         help='paths to tfrecords files', type=str,
                         nargs='+', required=True)
+
+    parser.add_argument('--output_json_file', dest='output_json_file',
+                        help='file path to save stat',
+                        type=str,required=False, default=None)
 
 
     parsed_args = parser.parse_args()
@@ -261,6 +314,11 @@ def main():
         class_stats(parsed_args.tfrecords)
     elif parsed_args.stat_type == 'verify_bboxes':
         verify_bboxes(parsed_args.tfrecords)
+    elif parsed_args.stat_type == 'get_image_list':
+        if parsed_args.output_json_file is not None:
+            get_image_list(parsed_args.tfrecords,parsed_args.output_json_file)
+        else:
+            print('please input a file path to store image list')
 
 if __name__ == '__main__':
     main()
