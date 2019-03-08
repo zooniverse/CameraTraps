@@ -37,9 +37,10 @@ class ResultsLoader():
 
     def evaluate_on_subset(self,keep_ids):
         keep_ids = set(keep_ids)
+        print(str(len(keep_ids))+' ids in subset')
         ids = self.ids
         idx = [i for i in range(len(ids)) if ids[i] in keep_ids]
-        print(len(idx))
+        #print(len(idx))
         self.preds = self.preds[idx]
         self.ids = self.ids[idx]
         self.logits = self.logits[idx]
@@ -78,7 +79,7 @@ class ResultsLoader():
 
     def get_correctly_classified_idx(self):
         self.correct = np.zeros(len(self.ids))
-        print(list(set(self.preds)),list(set(self.labels)))
+        #print(list(set(self.preds)),list(set(self.labels)))
         for i in range(len(self.ids)):
             if self.labels[i] == self.preds[i]:
                 self.correct[i] = 1

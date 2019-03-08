@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 
-split = 'imerit_deer'
-metric = 'per_class_prec'
+split = 'trans_test'
+metric = 'per_class_acc'
 
 file_1 = '/Users/sarabeery/Documents/CameraTrapClass/sim_classification/general/train_on_cct/_'+split+'_evaluation.p'
 data_1 = pickle.load(open(file_1,'rb'))
@@ -17,7 +16,9 @@ cats = data_1['classes']
 ap = data_1['per_class_eval'][metric]
 cat_id_to_cat = data_1['class_id_to_name']
 
-cat_ids = [i for i in ap if ((not np.isnan(ap[i])) and (ap[i] is not None))]
+print(ap)
+
+cat_ids = [i for i in ap if (ap[i] is not None)]
 print(cat_ids)
 
 N = len(cat_ids)
@@ -48,4 +49,4 @@ plt.tight_layout()
 
 plt.savefig('/Users/sarabeery/Documents/CameraTrapClass/sim_classification/per_class_eval_'+split+'_'+metric+'.jpg')
 
-#plt.show()
+plt.show()

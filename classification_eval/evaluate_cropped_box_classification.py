@@ -1,3 +1,5 @@
+#python evaluate_cropped_box_classification.py --database_json_file /Users/sarabeery/Documents/CameraTrapClass/Fixing_CCT_Anns/Corrected_versions/CombinedBBoxAndECCV18.json --results_file /Users/sarabeery/Documents/CameraTrapClass/sim_classification/general/train_on_cct/unity_night.p --alternate_category_file /Users/sarabeery/Documents/CameraTrapClass/code/CameraTraps/tfrecords/eccv_categories.json --save_folder /Users/sarabeery/Documents/CameraTrapClass/sim_classification/general/train_on_cct/unity_night_eval_dict.p
+
 
 import json
 import pickle
@@ -7,7 +9,9 @@ import sys
 import os
 sys.path.append('/Users/sarabeery/Documents/CameraTrapClass/code/CameraTraps/database_tools/')
 
-from sklearn.metrics import confusion_matrix, precision_recall_curve, average_precision_score, accuracy_score, roc_auc_score
+from sklearn.metrics import confusion_matrix, precision_recall_curve, average_precision_score, accuracy_score, roc_auc_score, auc
+#from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import classification_report
 from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
 import itertools
@@ -78,16 +82,10 @@ def calculate_per_class_acc(results,cats):
         else:
             per_class_acc[i] = None
 
-    return per_class_acc
+    return per_class_acc, total_ims
 
 
 def per_class_eval(results, cats):
-
-    # new_logits = []
-    # for i in range(len(results.logits)):
-    #     scores = results.probs[i]
-    #     new_scores = [scores[j] for j in cats]
-    #     new_logits.append(new_scores)
 
     Y_test = label_binarize(results.labels, classes=range(len(cats)))
     y_score = np.asarray(results.probs)
@@ -96,17 +94,39 @@ def per_class_eval(results, cats):
     precision = dict()
     recall = dict()
     average_precision = dict()
+    per_class_auc = dict()
     classes = []
-    #auc = dict()
     for i in range(n_classes):
         precision[i], recall[i], _ = precision_recall_curve(Y_test[:, i],y_score[:, i])
         average_precision[i] = average_precision_score(Y_test[:, i], y_score[:, i])
+        per_class_auc[i] = auc(recall[i],precision[i])
         print(i,average_precision[i])
+
+    per_class_acc, support = calculate_per_class_acc(results,cats)
+    per_class_prec,per_class_rec = calculate_per_class_pr(results,cats)
+
+    return {'precision':precision, 'recall':recall, 'average_precision':average_precision,'classes':classes,'per_class_acc':per_class_acc,'per_class_prec':per_class_prec,'per_class_rec':per_class_rec,'per_class_auc':per_class_auc,'per_class_support':support}
+
+def night_day_eval(results, night_day):
+
+    Y_test = label_binarize(results.labels, classes=range(len(cats)))
+    y_score = np.asarray(results.probs)
+    n_classes = len(cats)
+
+    precision = dict()
+    recall = dict()
+    average_precision = dict()
+    per_class_auc = dict()
+    classes = []
+    for i in range(n_classes):
+        precision[i], recall[i], _ = precision_recall_curve(Y_test[:, i],y_score[:, i])
+        average_precision[i] = average_precision_score(Y_test[:, i], y_score[:, i])
+        per_class_auc[i] = auc(recall[i],precision[i])
 
     per_class_acc = calculate_per_class_acc(results,cats)
     per_class_prec,per_class_rec = calculate_per_class_pr(results,cats)
 
-    return {'precision':precision, 'recall':recall, 'average_precision':average_precision,'classes':classes,'per_class_acc':per_class_acc,'per_class_prec':per_class_prec,'per_class_rec':per_class_rec}
+    return {'precision':precision, 'recall':recall, 'average_precision':average_precision,'classes':classes,'per_class_acc':per_class_acc,'per_class_prec':per_class_prec,'per_class_rec':per_class_rec,'per_class_auc':per_class_auc}
 
 
 def per_location_eval(data,results):
@@ -115,6 +135,11 @@ def per_location_eval(data,results):
 def accuracy(results):
     acc = accuracy_score(results.labels,results.preds)
     return acc
+
+def balanced_accuracy(results):
+    #this is average per-class accuracy, aka average per-class recall
+    balanced_acc = balanced_accuracy_score(results.labels,results.preds)
+    return balanced_acc
 
 def average_precision(results, cats):
 
@@ -202,6 +227,8 @@ def evaluate_classification(data, results):
 
     eval_dict['accuracy'] = accuracy(results)
 
+    #eval_dict['balanced_accuracy'] = balanced_accuracy(results)
+
     eval_dict['per_class_eval'] = per_class_eval(results,eval_dict['classes'])
 
     eval_dict['average_precision_recall'] = average_precision(results,eval_dict['classes'])
@@ -263,6 +290,8 @@ def main(plot=True):
             print('Evaluating on split: '+args.data_split_to_evaluate)
             image_ids = set(split[args.data_split_to_evaluate])
             ann_ids = []
+            print(list(image_ids)[0])
+            print(data.im_id_to_anns[list(image_ids)[0]])
             for idx in image_ids:
                 anns = [ann['id'] for ann in data.im_id_to_anns[idx]]
                 ann_ids.extend(anns)
@@ -276,11 +305,18 @@ def main(plot=True):
 
     eval_dict = evaluate_classification(data, results)
 
-    print(eval_dict['accuracy'])
-    print(eval_dict['per_class_eval']['per_class_acc'])
+    print(classification_report(results.labels,results.preds))
+
+    print('Accuracy: '+str(eval_dict['accuracy']))
+    #print(eval_dict['per_class_eval']['per_class_acc'])
+    print('Balanced Accuracy: '+str(np.mean([i for i in eval_dict['per_class_eval']['per_class_acc'].values() if i is not None])))
+    #print(eval_dict['per_class_eval']['per_class_auc'])
 
     if args.save_folder is not None:
-        pickle.dump(eval_dict,open(args.save_folder+'_'+args.data_split_to_evaluate+'_evaluation.p','wb'))
+        print(args.save_folder)
+        print(args.data_split_to_evaluate)
+        print('saving file at: '+args.save_folder+args.data_split_to_evaluate+'_eval_dict.p')
+        pickle.dump(eval_dict,open(args.save_folder+args.data_split_to_evaluate+'_eval_dict.p','wb'))
 
     if plot:
         plt = plot_per_class_prec_rec(eval_dict)
