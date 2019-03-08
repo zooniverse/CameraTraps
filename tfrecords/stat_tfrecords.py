@@ -131,6 +131,7 @@ def verify_bboxes(tfrecords):
     fetches = [image_id, image_height, image_width, bboxes, num_bboxes]
 
     image_count = 0
+    bbox_count = 0
     bbox_widths = []
     bbox_heights = []
     images_with_small_bboxes = set()
@@ -188,6 +189,7 @@ def verify_bboxes(tfrecords):
                     bbox_heights.append(h)
 
                 image_count += 1
+                bbox_count += img_num_bboxes
 
 
         except tf.errors.OutOfRangeError as e:
@@ -195,6 +197,8 @@ def verify_bboxes(tfrecords):
 
     # Basic info
     print("Found %d images" % (image_count,))
+    print()
+    print("Found %d bboxes" % (bbox_count,))
     print()
     print("Found %d images with small bboxes" % (len(images_with_small_bboxes),))
     #print("Images with areas < 10:")
