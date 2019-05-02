@@ -280,6 +280,8 @@ def get_image_list(tfrecords,output_json_file):
 
         except tf.errors.OutOfRangeError as e:
             pass
+    
+    print("Found %d images" % (len(image_ids),))
 
     with open(output_json_file,'w') as f:
         json.dump(image_ids, f)
