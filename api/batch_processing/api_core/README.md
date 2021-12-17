@@ -3,14 +3,14 @@
 
 ## Build the Docker image for Batch node pools
 
-We need to build a Docker image with the necessary packages (mainly TensorFlow) to run the scoring script. Azure Batch will pull this image from a private container registry, which needs to be in the same region as the Batch account. 
+We need to build a Docker image with the necessary packages (mainly TensorFlow) to run the scoring script. Azure Batch will pull this image from a private container registry, which needs to be in the same region as the Batch account.
 
 Navigate to the subdirectory `batch_service` (otherwise you need to specify the Docker context).
 
 Build the image from the Dockerfile in this folder:
 ```commandline
-export IMAGE_NAME=cameratracrsppftkje.azurecr.io/tensorflow:1.14.0-gpu-py3
-export REGISTRY_NAME=cameratracrsppftkje
+export IMAGE_NAME=zooniversecameratraps.azurecr.io/tensorflow:1.14.0-gpu-py3
+export REGISTRY_NAME=zooniversecameratraps
 sudo docker image build --rm --tag $IMAGE_NAME --file ./Dockerfile .
 ```
 
@@ -23,7 +23,7 @@ import tensorflow as tf
 print('tensorflow version:', tf.__version__)
 print('tf.test.is_gpu_available:', tf.test.is_gpu_available())
 quit()
-``` 
+```
 You can now exit/stop the container.
 
 Log in to the Azure Container Registry for the batch API project and push the image; you may have to `az login` first:
@@ -43,9 +43,9 @@ Follow the notebook [api_support/create_batch_pool.ipynb](../api_support/create_
 
 ## Flask app
 
-The API endpoints are in a Flask web application, which needs to be run in the conda environment `cameratraps-batch-api` specified by [environment-batch-api.yml](environment-batch-api.yml). 
+The API endpoints are in a Flask web application, which needs to be run in the conda environment `cameratraps-batch-api` specified by [environment-batch-api.yml](environment-batch-api.yml).
 
-In addition, the API uses the `sas_blob_utils` module from the `ai4eutils` [repo](https://github.com/microsoft/ai4eutils), so that repo folder should be on the PYTHONPATH. 
+In addition, the API uses the `sas_blob_utils` module from the `ai4eutils` [repo](https://github.com/microsoft/ai4eutils), so that repo folder should be on the PYTHONPATH.
 
 Make sure to update the `API_INSTANCE_NAME`, `POOL_ID`, `BATCH_ACCOUNT_NAME`, and `BATCH_ACCOUNT_URL` values in [server_api_config.py](./server_api_config.py) to reflect which instance of the API is being deployed.
 
@@ -79,7 +79,7 @@ gunicorn -w 1 -b 0.0.0.0:6011 --threads 4 --access-logfile $LOGS_DIR/log_interna
 ```
 The logs will only be written to these two log files and will not show in the console.
 
-The API should work with more than one process/Gunicorn worker, but we have not tested it. 
+The API should work with more than one process/Gunicorn worker, but we have not tested it.
 
 
 ## Send daily activity summary to Teams
