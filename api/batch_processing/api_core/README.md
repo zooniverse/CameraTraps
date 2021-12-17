@@ -38,7 +38,7 @@ sudo docker image push $IMAGE_NAME
 
 We create a separate node pool for each instance of the API. For example, our `internal` instance of the API has one node pool.
 
-Follow the notebook [api_support/create_batch_pool.ipynb](../api_support/create_batch_pool.ipynb) to create one. You should only need to do this for new instances of the API.
+Follow the `examples/create_batch_pool.ipynb` notebook in the PR at [create_batch_pool PR](https://github.com/zooniverse/panoptes-python-notebook/pull/4) to create one. You should only need to do this for new instances of the API.
 
 
 ## Flask app
