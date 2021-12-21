@@ -96,6 +96,5 @@ REGISTRY_SERVER = os.environ['REGISTRY_SERVER']
 REGISTRY_PASSWORD = os.environ['REGISTRY_PASSWORD']
 CONTAINER_IMAGE_NAME = os.getenv('CONTAINER_IMAGE_NAME', 'zooniversecameratraps.azurecr.io/tensorflow:1.14.0-gpu-py3')
 
-# Azure App Configuration instance to get configurations specific to
-# this instance of the API
-APP_CONFIG_CONNECTION_STR = os.environ['APP_CONFIG_CONNECTION_STR']
+# Restrict who can call this API Service
+CALLER_ALLOW_LIST = os.environ['CALLER_ALLOW_LIST']
