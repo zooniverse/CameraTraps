@@ -11,14 +11,14 @@ import os
 #%% instance-specific API settings
 # you likely need to modify these when deploying a new instance of the API
 
-API_INSTANCE_NAME = 'cm'  # 'internal', 'cm', 'camelot', 'zooniverse'
-POOL_ID = 'cm_1'  # name of the Batch pool created for this API instance
+API_INSTANCE_NAME = os.getenv('API_INSTANCE_NAME', 'zooniverse')  # 'internal', 'cm', 'camelot', 'zooniverse'
+POOL_ID = os.getenv('POOL_ID', 'zooniverse_0')  # name of the Batch pool created for this API instance
 
 MAX_NUMBER_IMAGES_ACCEPTED_PER_JOB = 4 * 1000 * 1000  # inclusive
 
 # Azure Batch for batch processing
-BATCH_ACCOUNT_NAME = 'cameratrapssc'
-BATCH_ACCOUNT_URL = 'https://cameratrapssc.southcentralus.batch.azure.com'
+BATCH_ACCOUNT_NAME = os.getenv('BATCH_ACCOUNT_NAME', 'zooniversecameratraps')
+BATCH_ACCOUNT_URL = os.getenv('BATCH_ACCOUNT_URL', 'https://zooniversecameratraps.eastus.batch.azure.com')
 
 
 #%% general API settings
@@ -72,9 +72,11 @@ NUM_TASKS_PER_RESUBMISSION = 5
 
 #%% env variables for service credentials, and info related to these services
 
-# Cosmos DB `batch-api-jobs` table for job status
+# Cosmos DB setup for job status tracking
 COSMOS_ENDPOINT = os.environ['COSMOS_ENDPOINT']
 COSMOS_WRITE_KEY = os.environ['COSMOS_WRITE_KEY']
+COSMOS_DB_NAME = os.getenv('COSMOS_DB_NAME', 'camera-trap')
+COSMOS_DB_CONTAINER = os.getenv('COSMOS_DB_CONTAINER', 'batch_api_jobs')
 
 # Service principal of this "application", authorized to use Azure Batch
 APP_TENANT_ID = os.environ['APP_TENANT_ID']
@@ -85,13 +87,14 @@ APP_CLIENT_SECRET = os.environ['APP_CLIENT_SECRET']
 STORAGE_ACCOUNT_NAME = os.environ['STORAGE_ACCOUNT_NAME']
 STORAGE_ACCOUNT_KEY = os.environ['STORAGE_ACCOUNT_KEY']
 
-# STORAGE_CONTAINER_MODELS = 'models'  # names of the two containers supporting Batch
-STORAGE_CONTAINER_API = 'batch-api'
+# STORAGE CONTAINERS - previously setup via the batch node pool code, https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing/api_core#create-a-batch-node-pool
+# STORAGE_CONTAINER_MODELS = os.getenv('STORAGE_CONTAINER_MODELS', 'models')  # not used in the API
+STORAGE_CONTAINER_API = os.getenv('STORAGE_CONTAINER_API', 'batch-api')
 
 # Azure Container Registry for Docker image used by our Batch node pools
 REGISTRY_SERVER = os.environ['REGISTRY_SERVER']
 REGISTRY_PASSWORD = os.environ['REGISTRY_PASSWORD']
-CONTAINER_IMAGE_NAME = 'cameratracrsppftkje.azurecr.io/tensorflow:1.14.0-gpu-py3'
+CONTAINER_IMAGE_NAME = os.getenv('CONTAINER_IMAGE_NAME', 'zooniversecameratraps.azurecr.io/tensorflow:1.14.0-gpu-py3')
 
 # Azure App Configuration instance to get configurations specific to
 # this instance of the API

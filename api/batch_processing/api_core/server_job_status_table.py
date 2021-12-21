@@ -15,7 +15,7 @@ from typing import Union, Optional
 from azure.cosmos.cosmos_client import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from server_api_config import API_INSTANCE_NAME, COSMOS_ENDPOINT, COSMOS_WRITE_KEY
+from server_api_config import API_INSTANCE_NAME, COSMOS_ENDPOINT, COSMOS_WRITE_KEY, COSMOS_DB_NAME, COSMOS_DB_CONTAINER
 from server_utils import get_utc_time
 
 
@@ -43,8 +43,8 @@ class JobStatusTable:
     def __init__(self, api_instance=None):
         self.api_instance = api_instance if api_instance is not None else API_INSTANCE_NAME
         cosmos_client = CosmosClient(COSMOS_ENDPOINT, credential=COSMOS_WRITE_KEY)
-        db_client = cosmos_client.get_database_client('camera-trap')
-        self.db_jobs_client = db_client.get_container_client('batch_api_jobs')
+        db_client = cosmos_client.get_database_client(COSMOS_DB_NAME)
+        self.db_jobs_client = db_client.get_container_client(COSMOS_DB_CONTAINER)
 
     def create_job_status(self, job_id: str, status: Union[dict, str], call_params: dict) -> dict:
         assert 'request_status' in status and 'message' in status
