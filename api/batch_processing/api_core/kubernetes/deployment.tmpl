@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: camera-traps-api
+  labels:
+    app: camera-traps-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: camera-traps-api
+  template:
+    metadata:
+      labels:
+        app: camera-traps-api
+    spec:
+      containers:
+        - name: camera-traps-api
+          image: zooniverse/camera-traps-api:__IMAGE_TAG__
+          resources:
+             requests:
+               memory: "100Mi"
+               cpu: "10m"
+             limits:
+               memory: "500Mi"
+               cpu: "1000m"
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8080
+            # wait 3 * 10 seconds(default periodSeconds) for the container to start
+            # after this succeeds once the liveness probe takes over
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            # allow a longer response time than 1s
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            # start checking for readiness after 10s (to serve traffic)
+            initialDelaySeconds: 10
+            # allow a longer response time than 1s
+            timeoutSeconds: 10
+          env:
+            - name: FLASK_APP
+              value: server
+            - name: FLASK_ENV
+              value: production
+            - name: LISTEN_PORT
+              value: 8080
+            - name: APP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: APP_CLIENT_ID
+            - name: APP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: APP_CLIENT_SECRET
+            - name: APP_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: APP_TENANT_ID
+            - name: CALLER_ALLOW_LIST
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: CALLER_ALLOW_LIST
+            - name: COSMOS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: COSMOS_ENDPOINT
+            - name: COSMOS_WRITE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: COSMOS_WRITE_KEY
+            - name: REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: REGISTRY_PASSWORD
+            - name: REGISTRY_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: REGISTRY_SERVER
+            - name: STORAGE_ACCOUNT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: STORAGE_ACCOUNT_KEY
+            - name: STORAGE_ACCOUNT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: camera-traps-api
+                  key: STORAGE_ACCOUNT_NAME
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: camera-traps-api
+spec:
+  selector:
+    app: camera-traps-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: NodePort
