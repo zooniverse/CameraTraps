@@ -14,4 +14,3 @@ services:
       - LISTEN_PORT=8080
       - FLASK_ENV=development
       - FLASK_APP=server
-      - FLASK_DEBUG=1
