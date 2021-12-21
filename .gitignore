@@ -48,6 +48,7 @@ api/batch_processing/postprocessing/CameraTrapJsonFileProcessingApp/packages/
 
 # batch processing API config files
 api_config*.py
+.env
 
 # Other
 *.pth
