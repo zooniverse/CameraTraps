@@ -26,20 +26,20 @@ spec:
                cpu: "1000m"
           startupProbe:
             httpGet:
-              path: /
+              path: /v4/camera-trap/detection-batch
               port: 8080
             # wait 3 * 10 seconds(default periodSeconds) for the container to start
             # after this succeeds once the liveness probe takes over
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /
+              path: /v4/camera-trap/detection-batch
               port: 8080
             # allow a longer response time than 1s
             timeoutSeconds: 30
           readinessProbe:
             httpGet:
-              path: /
+              path: /v4/camera-trap/detection-batch
               port: 8080
             # start checking for readiness after 10s (to serve traffic)
             initialDelaySeconds: 10
