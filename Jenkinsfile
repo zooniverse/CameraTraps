@@ -14,7 +14,8 @@ pipeline {
         script {
           def dockerRepoName = 'zooniverse/camera-traps-api'
           def dockerImageName = "${dockerRepoName}:${GIT_COMMIT}"
-          def newImage = docker.build(dockerImageName)
+          def dockerFileDir = "api/batch_processing/api_core/"
+          def newImage = docker.build(dockerImageName, dockerFileDir)
           newImage.push()
 
           if (BRANCH_NAME == 'zooniverse-deployment') {
