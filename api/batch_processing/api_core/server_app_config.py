@@ -16,3 +16,7 @@ class AppConfig:
 
         # setup the known caller allowList using delimited ENV var string
         self.allowlist = CALLER_ALLOW_LIST.split(';')
+
+    def get_allowlist(self):
+        return self.allowlist
+
