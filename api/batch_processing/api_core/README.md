@@ -40,6 +40,13 @@ We create a separate node pool for each instance of the API. For example, our `i
 
 Follow the `examples/create_batch_pool.ipynb` notebook in the PR at [create_batch_pool PR](https://github.com/zooniverse/panoptes-python-notebook/pull/4) to create one. You should only need to do this for new instances of the API.
 
+## Upload the Megadetector model for use in the Batch node pool
+
+The TF `.pb` model file needs to be available for the Node Batch pool VMs, via mounted blob containers from the newly setup storage accounts in step above.
+
+Download the `v4` version of the model `.pb` file from the download links in [megadetector.md](../../../megadetector.md) and upload to the correct paths in the `models` storage account setup in batch node setup above.
+
+Location to upload can be found in [score.py](batch_service/score.py#L414) noting the use of env.DETECTOR_REL_PATH which is setup by MD_VERSIONS_TO_REL_PATH in [server_api_config.py](server_api_config.py#L51). Default for `v4.1` model is `models/megadetector_copies/megadetector_v4_1/md_v4.1.0.pb`
 
 ## Flask app
 
