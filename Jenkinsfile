@@ -17,7 +17,7 @@ pipeline {
           def newImage = docker.build(dockerImageName)
           newImage.push()
 
-          if (BRANCH_NAME == 'master') {
+          if (BRANCH_NAME == 'zooniverse-deployment') {
             stage('Update latest tag') {
               newImage.push('latest')
             }
@@ -33,7 +33,7 @@ pipeline {
     }
 
     stage('Deploy to Kubernetes') {
-      when { branch 'master' }
+      when { branch 'zooniverse-deployment' }
       agent any
       steps {
         sh "sed 's/__IMAGE_TAG__/${GIT_COMMIT}/g' kubernetes/deployment.tmpl | kubectl --context azure apply --record -f -"
