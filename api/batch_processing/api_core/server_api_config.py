@@ -49,6 +49,7 @@ DETECTION_CONF_THRESHOLD = 0.1
 # relative to the `megadetector_copies` folder in the container `models`
 # TODO add MD versions info to AppConfig
 MD_VERSIONS_TO_REL_PATH = {
+    '5a': 'megadetector_v5a/md_v5a.0.0.pt',
     '4.1': 'megadetector_v4_1/md_v4.1.0.pb',
     '3': 'megadetector_v3/megadetector_v3_tf19.pb',
     '2': 'megadetector_v2/frozen_inference_graph.pb'
