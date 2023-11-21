@@ -13,6 +13,7 @@ import os
 
 API_INSTANCE_NAME = os.getenv('API_INSTANCE_NAME', 'zooniverse')  # 'internal', 'cm', 'camelot', 'zooniverse'
 POOL_ID = os.getenv('POOL_ID', 'zooniverse_0')  # name of the Batch pool created for this API instance
+POOL_ID_V5 = os.getenv('POOL_ID', 'zooniverse_1')
 
 MAX_NUMBER_IMAGES_ACCEPTED_PER_JOB = 4 * 1000 * 1000  # inclusive
 
@@ -23,6 +24,7 @@ BATCH_ACCOUNT_URL = os.getenv('BATCH_ACCOUNT_URL', 'https://zooniversecameratrap
 
 #%% general API settings
 API_PREFIX = '/v4/camera-trap/detection-batch'  # URL to root is http://127.0.0.1:5000/v4/camera-trap/detection-batch/
+API_PREFIX_V5 = '/v5/camera-trap/detection-batch'
 
 MONITOR_PERIOD_MINUTES = 10
 
@@ -55,7 +57,10 @@ MD_VERSIONS_TO_REL_PATH = {
     '2': 'megadetector_v2/frozen_inference_graph.pb'
 }
 DEFAULT_MD_VERSION = '4.1'
+DEFAULT_MD_VERSION_V5 = '5a'
 assert DEFAULT_MD_VERSION in MD_VERSIONS_TO_REL_PATH
+assert DEFAULT_MD_VERSION_V5 in MD_VERSIONS_TO_REL_PATH
+
 
 # copied from TFDetector class in detection/run_detector.py
 DETECTOR_LABEL_MAP = {

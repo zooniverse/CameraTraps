@@ -27,6 +27,7 @@ if __name__ != '__main__':
 
 
 API_PREFIX = api_config.API_PREFIX
+API_PREFIX_V5 = api_config.API_PREFIX_V5
 app.logger.info('server, created Flask application...')
 
 # %% Helper classes
@@ -40,11 +41,13 @@ app.logger.info('server, finished instantiating helper classes')
 # %% Flask endpoints
 
 @app.route(f'{API_PREFIX}/')
+@app.route(f'{API_PREFIX_V5}/')
 def hello():
     return f'Camera traps batch processing API. Instance: {api_config.API_INSTANCE_NAME}'
 
 
 @app.route(f'{API_PREFIX}/request_detections', methods=['POST'])
+@app.route(f'{API_PREFIX_V5}/request_detections', methods=['POST'])
 def request_detections():
     """
     Checks that the input parameters to this endpoint are valid, starts a thread
@@ -156,6 +159,7 @@ def request_detections():
 
 
 @app.route(f'{API_PREFIX}/cancel_request', methods=['POST'])
+@app.route(f'{API_PREFIX_V5}/cancel_request', methods=['POST'])
 def cancel_request():
     """
     Cancels a request/job given the job_id and caller_id
@@ -204,6 +208,7 @@ def cancel_request():
 
 
 @app.route(f'{API_PREFIX}/task/<job_id>')
+@app.route(f'{API_PREFIX_V5}/task/<job_id>')
 def retrieve_job_status(job_id: str):
     """
     Does not require the "caller" field to avoid checking the allowlist in App Configurations.
@@ -268,7 +273,11 @@ def retrieve_job_status(job_id: str):
 
 
 @app.route(f'{API_PREFIX}/default_model_version')
+@app.route(f'{API_PREFIX_V5}/default_model_version')
 def get_default_model_version() -> str:
+    if request.path.startswith(API_PREFIX_V5):
+        return api_config.DEFAULT_MD_VERSION_V5
+
     return api_config.DEFAULT_MD_VERSION
 
 
