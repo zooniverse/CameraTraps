@@ -12,8 +12,8 @@ import os
 # you likely need to modify these when deploying a new instance of the API
 
 API_INSTANCE_NAME = os.getenv('API_INSTANCE_NAME', 'zooniverse')  # 'internal', 'cm', 'camelot', 'zooniverse'
-POOL_ID = os.getenv('POOL_ID', 'zooniverse_0')  # name of the Batch pool created for this API instance
-POOL_ID_V5 = os.getenv('POOL_ID', 'zooniverse_1')
+POOL_ID = os.getenv('POOL_ID', 'zooniverse_0')
+POOL_ID_V5 = os.getenv('POOL_ID', 'zooniverse_1') # name of the Batch pool created for this API instance
 
 MAX_NUMBER_IMAGES_ACCEPTED_PER_JOB = 4 * 1000 * 1000  # inclusive
 
@@ -24,7 +24,6 @@ BATCH_ACCOUNT_URL = os.getenv('BATCH_ACCOUNT_URL', 'https://zooniversecameratrap
 
 #%% general API settings
 API_PREFIX = '/v4/camera-trap/detection-batch'  # URL to root is http://127.0.0.1:5000/v4/camera-trap/detection-batch/
-API_PREFIX_V5 = '/v5/camera-trap/detection-batch'
 
 MONITOR_PERIOD_MINUTES = 10
 
@@ -56,11 +55,9 @@ MD_VERSIONS_TO_REL_PATH = {
     '3': 'megadetector_v3/megadetector_v3_tf19.pb',
     '2': 'megadetector_v2/frozen_inference_graph.pb'
 }
-DEFAULT_MD_VERSION = '4.1'
-DEFAULT_MD_VERSION_V5 = '5a'
-assert DEFAULT_MD_VERSION in MD_VERSIONS_TO_REL_PATH
-assert DEFAULT_MD_VERSION_V5 in MD_VERSIONS_TO_REL_PATH
 
+DEFAULT_MD_VERSION = '5a'
+assert DEFAULT_MD_VERSION in MD_VERSIONS_TO_REL_PATH
 
 # copied from TFDetector class in detection/run_detector.py
 DETECTOR_LABEL_MAP = {
@@ -100,7 +97,7 @@ STORAGE_CONTAINER_API = os.getenv('STORAGE_CONTAINER_API', 'batch-api')
 # Azure Container Registry for Docker image used by our Batch node pools
 REGISTRY_SERVER = os.environ['REGISTRY_SERVER']
 REGISTRY_PASSWORD = os.environ['REGISTRY_PASSWORD']
-CONTAINER_IMAGE_NAME = os.getenv('CONTAINER_IMAGE_NAME', 'zooniversecameratraps.azurecr.io/tensorflow:1.14.0-gpu-py3')
+CONTAINER_IMAGE_NAME = os.getenv('CONTAINER_IMAGE_NAME', 'zooniversecameratraps.azurecr.io/pytorch:2.1.0-cuda12.1-cudnn8-runtime')
 
 # Restrict who can call this API Service
 CALLER_ALLOW_LIST = os.environ['CALLER_ALLOW_LIST']
