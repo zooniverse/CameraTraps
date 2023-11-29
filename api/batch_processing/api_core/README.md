@@ -3,25 +3,29 @@
 
 ## Build the Docker image for Batch node pools
 
-We need to build a Docker image with the necessary packages (mainly TensorFlow) to run the scoring script. Azure Batch will pull this image from a private container registry, which needs to be in the same region as the Batch account.
+We need to build a Docker image with the necessary packages (mainly PyTorch) to run the scoring script. Azure Batch will pull this image from a private container registry, which needs to be in the same region as the Batch account.
 
 Navigate to the subdirectory `batch_service` (otherwise you need to specify the Docker context).
 
+```
+cd batch_service
+```
+
 Build the image from the Dockerfile in this folder:
 ```commandline
-export IMAGE_NAME=zooniversecameratraps.azurecr.io/tensorflow:1.14.0-gpu-py3
+export IMAGE_NAME=zooniversecameratraps.azurecr.io/pytorch:2.1.0-cuda12.1-cudnn8-runtime
 export REGISTRY_NAME=zooniversecameratraps
 sudo docker image build --rm --tag $IMAGE_NAME --file ./Dockerfile .
 ```
 
-Test that TensorFlow can use the GPU in an interactive Python session:
+Test that PyTorch can use the Cuda in an interactive Python session:
 ```commandline
 sudo docker run --gpus all -it --rm $IMAGE_NAME /bin/bash
 
 python
-import tensorflow as tf
-print('tensorflow version:', tf.__version__)
-print('tf.test.is_gpu_available:', tf.test.is_gpu_available())
+import torch
+print('pytorch version:', torch.__version__)
+print('torch.cuda.is_available:', torch.cuda.is_available())
 quit()
 ```
 You can now exit/stop the container.
@@ -42,11 +46,11 @@ Follow the `examples/create_batch_pool.ipynb` notebook in the PR at [create_batc
 
 ## Upload the Megadetector model for use in the Batch node pool
 
-The TF `.pb` model file needs to be available for the Node Batch pool VMs, via mounted blob containers from the newly setup storage accounts in step above.
+MegaDetector V5 is a PT `.pt` model and needs to be available for the Node Batch pool VMs, via mounted blob containers from the newly setup storage accounts in step above.
 
-Download the `v4` version of the model `.pb` file from the download links in [megadetector.md](../../../megadetector.md) and upload to the correct paths in the `models` storage account setup in batch node setup above.
+Download the `v5a` version of the model `.pt` file from the download links in [megadetector.md](../../../megadetector.md) and upload to the correct paths in the `models` storage account setup in batch node setup above.
 
-Location to upload can be found in [score.py](batch_service/score.py#L414) noting the use of env.DETECTOR_REL_PATH which is setup by MD_VERSIONS_TO_REL_PATH in [server_api_config.py](server_api_config.py#L51). Default for `v4.1` model is `models/megadetector_copies/megadetector_v4_1/md_v4.1.0.pb`
+Location to upload can be found in [score_v5.py](batch_service/score_v5.py#246) noting the use of env.DETECTOR_REL_PATH which is setup by MD_VERSIONS_TO_REL_PATH in [server_api_config.py](server_api_config.py#L51). Default for `v5a` model is `models/megadetector_copies/megadetector_v5a/md_v5a.0.0.pt`
 
 ## Flask app
 
