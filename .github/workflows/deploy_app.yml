@@ -13,7 +13,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4.1.1
       with:
-        repository: zooniverse/camera-traps-api
+        repository: zooniverse/CameraTraps
         ref: zooniverse-deployment
 
     - name: Login to GitHub Container Registry
