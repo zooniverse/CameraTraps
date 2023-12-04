@@ -66,11 +66,11 @@ jobs:
     - name: Dry run deployments
       run: |
         sed "s/__IMAGE_TAG__/${{ github.sha }}/g" ./api/batch_processing/api_core/kubernetes/deployment.tmpl \
-          | kubectl --context azure apply --dry-run=client --record -f -
+          | kubectl apply --dry-run=client -f -
 
     - name: Modify & apply template
       run: |
         sed "s/__IMAGE_TAG__/${{ github.sha }}/g" ./api/batch_processing/api_core/kubernetes/deployment.tmpl \
-          | kubectl --context azure apply --record -f -
+          | kubectl apply -f -
 
 
