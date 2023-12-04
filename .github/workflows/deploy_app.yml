@@ -13,7 +13,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4.1.1
       with:
-        repository: zooniverse/camera-traps-api
+        repository: zooniverse/CameraTraps
         ref: zooniverse-deployment
 
     - name: Login to GitHub Container Registry
@@ -36,8 +36,8 @@ jobs:
         file: ./api/batch_processing/api_core/Dockerfile
         push: true
         tags: |
-          ghcr.io/zooniverse/camera-traps-api:latest
-          ghcr.io/zooniverse/camera-traps-api:${{ github.sha }}
+          ghcr.io/zooniverse/CameraTraps:latest
+          ghcr.io/zooniverse/CameraTraps:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
