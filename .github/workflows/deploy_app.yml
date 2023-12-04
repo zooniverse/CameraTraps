@@ -36,8 +36,8 @@ jobs:
         file: ./api/batch_processing/api_core/Dockerfile
         push: true
         tags: |
-          ghcr.io/zooniverse/CameraTraps:latest
-          ghcr.io/zooniverse/CameraTraps:${{ github.sha }}
+          ghcr.io/zooniverse/camera-traps-api:latest
+          ghcr.io/zooniverse/camera-traps-api:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
