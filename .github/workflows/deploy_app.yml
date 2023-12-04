@@ -32,8 +32,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v5.1.0
       with:
-        context: .
-        file: ./api/batch_processing/api_core/Dockerfile
+        context: api/batch_processing/api_core
         push: true
         tags: |
           ghcr.io/zooniverse/camera-traps-api:latest
