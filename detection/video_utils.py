@@ -43,7 +43,7 @@ def find_video_strings(strings: Iterable[str]) -> List[str]:
     Given a list of strings that are potentially video file names, looks for
     strings that actually look like video file names (based on extension).
     """
-    return [s for s in strings if is_video_file(s)]
+    return [s for s in strings if is_video_file(s.lower())]
 
 
 def find_videos(dirname: str, recursive: bool = False) -> List[str]:
@@ -68,6 +68,9 @@ def frames_to_video(images, Fs, output_file_name, codec_spec='h264'):
     a video and write to [output_file_name].
     """
     
+    if codec_spec is None:
+        codec_spec = 'h264'
+        
     if len(images) == 0:
         return
 
@@ -100,7 +103,8 @@ def get_video_fs(input_video_file):
     return Fs
 
 
-def video_to_frames(input_video_file, output_folder, overwrite=True):
+def video_to_frames(input_video_file, output_folder, overwrite=True, 
+                    every_n_frames=None, verbose=False):
     """
     Render every frame of [input_video_file] to a .jpg in [output_folder]
     
@@ -141,22 +145,31 @@ def video_to_frames(input_video_file, output_folder, overwrite=True):
             print('Skipping video {}, all output frames exist'.format(input_video_file))
             return frame_filenames,Fs
         else:
-            print("Rendering video, couldn't find {}".format(missing_frame_number))
+            pass
+            # print("Rendering video {}, couldn't find frame {}".format(
+            #    input_video_file,missing_frame_number))
     
     # ...if we need to check whether to skip this video entirely
         
-    print('Reading {} frames at {} Hz from {}'.format(n_frames,Fs,input_video_file))
+    if verbose:
+        print('Reading {} frames at {} Hz from {}'.format(n_frames,Fs,input_video_file))
 
     frame_filenames = []
 
-    for frame_number in tqdm(range(0,n_frames)):
+    # for frame_number in tqdm(range(0,n_frames)):
+    for frame_number in range(0,n_frames):
 
         success,image = vidcap.read()
         if not success:
             assert image is None
-            print('Read terminating at frame {} of {}'.format(frame_number,n_frames))
+            if verbose:
+                print('Read terminating at frame {} of {}'.format(frame_number,n_frames))
             break
 
+        if every_n_frames is not None:
+            if frame_number % every_n_frames != 0:
+                continue
+            
         frame_filename = 'frame{:05d}.jpg'.format(frame_number)
         frame_filename = os.path.join(output_folder,frame_filename)
         frame_filenames.append(frame_filename)
@@ -171,14 +184,16 @@ def video_to_frames(input_video_file, output_folder, overwrite=True):
                 else:
                     is_success, im_buf_arr = cv2.imencode('.jpg', image)
                     im_buf_arr.tofile(frame_filename)
-                assert os.path.isfile(frame_filename), 'Output frame {} unavailable'.format(frame_filename)
+                assert os.path.isfile(frame_filename), \
+                    'Output frame {} unavailable'.format(frame_filename)
             except KeyboardInterrupt:
                 vidcap.release()
                 raise
             except Exception as e:
                 print('Error on frame {} of {}: {}'.format(frame_number,n_frames,str(e)))
 
-    print('\nExtracted {} of {} frames'.format(len(frame_filenames),n_frames))
+    if verbose:
+        print('\nExtracted {} of {} frames'.format(len(frame_filenames),n_frames))
 
     vidcap.release()    
     return frame_filenames,Fs
@@ -186,14 +201,19 @@ def video_to_frames(input_video_file, output_folder, overwrite=True):
 
 def video_folder_to_frames(input_folder:str, output_folder_base:str, 
                            recursive:bool=True, overwrite:bool=True,
-                           n_threads:int=1):
+                           n_threads:int=1, every_n_frames:int=None,
+                           verbose=False):
     """
     For every video file in input_folder, create a folder within output_folder_base, and 
     render every frame of the video to .jpg in that folder.
     """
     
     # Recursively enumerate video files
-    input_files_full_paths = find_videos(input_folder,recursive=True)
+    input_files_full_paths = find_videos(input_folder,recursive=recursive)
+    print('Found {} videos in folder {}'.format(len(input_files_full_paths),input_folder))
+    if len(input_files_full_paths) == 0:
+        return [],[],[]
+    
     input_files_relative_paths = [os.path.relpath(s,input_folder) for s in input_files_full_paths]
     input_files_relative_paths = [s.replace('\\','/') for s in input_files_relative_paths]
     
@@ -213,7 +233,9 @@ def video_folder_to_frames(input_folder:str, output_folder_base:str,
     
         # Render frames
         # input_video_file = input_fn_absolute; output_folder = output_folder_video
-        frame_filenames,fs = video_to_frames(input_fn_absolute,output_folder_video,overwrite=overwrite)
+        frame_filenames,fs = video_to_frames(input_fn_absolute,output_folder_video,
+                                             overwrite=overwrite,every_n_frames=every_n_frames,
+                                             verbose=verbose)
         
         return frame_filenames,fs
     
@@ -235,7 +257,7 @@ def video_folder_to_frames(input_folder:str, output_folder_base:str,
         frame_filenames_by_video = [x[0] for x in results]
         fs_by_video = [x[1] for x in results]
         
-    return frame_filenames_by_video,fs_by_video
+    return frame_filenames_by_video,fs_by_video,input_files_full_paths
   
 
 class FrameToVideoOptions:
@@ -289,7 +311,8 @@ def frame_results_to_video_results(input_file,output_file,options:FrameToVideoOp
         
         # frame = frames[0]
         for frame in frames:
-            all_detections_this_video.extend(frame['detections'])
+            if frame['detections'] is not None:
+                all_detections_this_video.extend(frame['detections'])
             
         # At most one detection for each category for the whole video
         canonical_detections = []
@@ -297,23 +320,28 @@ def frame_results_to_video_results(input_file,output_file,options:FrameToVideoOp
         # category_id = list(detection_categories.keys())[0]
         for category_id in detection_categories:
             
-            category_detections = [det for det in all_detections_this_video if det['category'] == category_id]
+            category_detections = [det for det in all_detections_this_video if \
+                                   det['category'] == category_id]
             
             # Find the nth-highest-confidence video to choose a confidence value
-            if len(category_detections) > options.nth_highest_confidence:
+            if len(category_detections) >= options.nth_highest_confidence:
                 
-                category_detections_by_confidence = sorted(category_detections, key = lambda i: i['conf'],reverse=True)
-                canonical_detection = category_detections_by_confidence[options.nth_highest_confidence]
+                category_detections_by_confidence = sorted(category_detections, 
+                                                           key = lambda i: i['conf'],reverse=True)
+                canonical_detection = category_detections_by_confidence[options.nth_highest_confidence-1]
                 canonical_detections.append(canonical_detection)
                                       
         # Prepare the output representation for this video
         im_out = {}
         im_out['file'] = video_name
         im_out['detections'] = canonical_detections
-        im_out['max_detection_conf'] = 0
-        if len(canonical_detections) > 0:
-            confidences = [d['conf'] for d in canonical_detections]
-            im_out['max_detection_conf'] = max(confidences)
+        
+        # 'max_detection_conf' is no longer included in output files by default
+        if False:
+            im_out['max_detection_conf'] = 0
+            if len(canonical_detections) > 0:
+                confidences = [d['conf'] for d in canonical_detections]
+                im_out['max_detection_conf'] = max(confidences)
         
         output_images.append(im_out)
         
@@ -327,9 +355,7 @@ def frame_results_to_video_results(input_file,output_file,options:FrameToVideoOp
     with open(output_file,'w') as f:
         f.write(s)
     
-    #%%
-    
-    
+        
 #%% Test driver
 
 if False:
@@ -350,7 +376,8 @@ if False:
     
     #%% Split videos into frames
         
-    frame_filenames_by_video,fs_by_video = video_folder_to_frames(input_folder,frame_folder_base,recursive=True)
+    frame_filenames_by_video,fs_by_video,video_filenames = \
+        video_folder_to_frames(input_folder,frame_folder_base,recursive=True)
     
     
     #%% List image files, break into folders
@@ -417,12 +444,14 @@ if False:
         assert os.path.isdir(rendered_detector_output_folder)
         
         frame_files_relative = os.listdir(rendered_detector_output_folder)
-        frame_files_absolute = [os.path.join(rendered_detector_output_folder,s) for s in frame_files_relative]
+        frame_files_absolute = [os.path.join(rendered_detector_output_folder,s) \
+                                for s in frame_files_relative]
         
         output_video_filename = os.path.join(rendered_videos_folder_base,folder_relative)
         os.makedirs(os.path.dirname(output_video_filename),exist_ok=True)
         
-        original_video_filename = output_video_filename.replace(rendered_videos_folder_base,input_folder)
+        original_video_filename = output_video_filename.replace(
+            rendered_videos_folder_base,input_folder)
         assert os.path.isfile(original_video_filename)
         Fs = get_video_fs(original_video_filename)
                 

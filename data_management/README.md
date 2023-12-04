@@ -1,6 +1,6 @@
 # Overview
 
-Everything in this directory creates or operates on COCO Camera Traps databases, which are .json files structured as...
+Almost all the scripts in this directory create or operates on COCO Camera Traps databases, which are .json files structured as...
 
 ## COCO Camera Traps format
 
@@ -53,7 +53,7 @@ category
   # Required
   
   # Category ID 0 reserved for the class "empty"; all other categories vary by data
-  # set.  Positive integers only.
+  # set.  Non-negative integers only.
   "id" : int,
   "name" : str  
 }

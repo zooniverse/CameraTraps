@@ -31,16 +31,16 @@
 
 This README describes how to train and run an animal "species" classifier. "Species" is in quotes, because the classifier can be trained to identify animals at arbitrary levels within the biological taxonomy of animals.
 
-This guide is written for internal use at Microsoft AI for Earth. Certain services, such as MegaDB and various private repos are only accessible interally within Microsoft. However, this guide may still be of interest to more technical users of the AI for Earth Camera Trap services.
+This guide is written for internal use at Microsoft AI for Earth. Certain services, such as MegaDB and various private repos are only accessible internally within Microsoft. However, this guide may still be of interest to more technical users of the AI for Earth Camera Trap services.
 
-The classifiers trained with this pipeline are intended to be used in conjunction with <a href="https://github.com/microsoft/CameraTraps/blob/master/megadetector.md">MegaDetector</a>, i.e., we use MegaDetector to find animals and crop them out, and we train/run our classifiers on those crops.
+The classifiers trained with this pipeline are intended to be used in conjunction with <a href="https://github.com/ecologize/CameraTraps/blob/master/megadetector.md">MegaDetector</a>, i.e., we use MegaDetector to find animals and crop them out, and we train/run our classifiers on those crops.
 
 
 # Setup
 
 ## Installation
 
-Install [miniconda3](https://docs.conda.io/en/latest/miniconda.html). Then create the conda environment using the following command. If you want to run PyTorch on a GPU, be sure to comment out `cpuonly` and uncomment `cudatoolkit` in `environment-classifier.yml`. If you need to add/remove/modify packages, make the appropriate change in the `environment-classifier.yml` file and run the following command again.
+Install Anaconda or [miniconda3](https://docs.conda.io/en/latest/miniconda.html). Then create the conda environment using the following command:
 
 ```bash
 conda env update -f environment-classifier.yml --prune
@@ -52,35 +52,44 @@ Activate this conda environment:
 conda activate cameratraps-classifier
 ```
 
-Verify that *Pillow-SIMD* (installed from PyPI) overshadows the normal *Pillow* package (installed from conda) by running:
+## Verifying that CUDA is available (and dealing with the case where it isn't)
+
+Verify that CUDA is available (assumes that the current working directory is the CameraTraps repo root):
 
 ```bash
-python -c "import PIL; print(PIL.__version__)"
+python sandbox/torch_test.py
 ```
 
-Make sure that the *Pillow* version ends in `'.postX'`, which indicates *Pillow-SIMD*.
+If CUDA isn't available but should be (i.e., you have an NVIDIA GPU and recent drivers)...
 
-If this is running on a VM, enable remote Jupyter notebook access by doing the following. For more information, see the [Jupyter notebook server guide](https://jupyter-notebook.readthedocs.io/en/stable/public_server.html).
-
-1. Make sure that the desired port (e.g., 8888) is publicly exposed on the VM.
-2. Run the following command to create a Jupyter config file at `$HOME/.jupyter/jupyter_notebook_config.py`.
-
-    ```bash
-    jupyter notebook --generate-config
-    ```
-
-3. Add the following line to the config file:
-
-    ```python
-    c.NotebookApp.ip = '*'
-    ```
-
-To use the *tqdm* widget in a notebook through JupyterLab (`jupyter lab`), make sure you have node.js installed, then run the following command. See the [*ipywidgets* installation guide](https://ipywidgets.readthedocs.io/en/latest/user_install.html) for more details.
+YMMV, but in at least one Linux environment, the following fixed this issue:
 
 ```bash
-jupyter labextension install @jupyter-widgets/jupyterlab-manager
+pip uninstall torch torchvision
+conda install pytorch=1.10.1 torchvision=0.11.2 -c pytorch
 ```
 
+YMMV again, but in at least one Windows environment, the following fixed this issue:
+
+```bash
+pip uninstall torch torchvision
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+```
+
+## Optional steps to make classification faster in Linux
+
+If you are on Linux, you may also get some speedup by installing the [accimage](https://github.com/pytorch/accimage) package for acclerated image loading.  Because this is Linux-only and optional, we have commented it out of the environment file, but you can install it with:
+
+```bash
+conda install -c conda-forge accimage
+```
+
+Similarly, on Linux, you may get some speedup by installing [Pillow-SIMD](https://github.com/uploadcare/pillow-simd):
+
+```bash
+pip uninstall -y pillow
+pip install pillow-simd
+```
 
 ## Directory Structure
 
@@ -152,7 +161,7 @@ mypy -p classification.train_classifier
 
 # MegaClassifier
 
-MegaClassifier is an image classifier. MegaClassifier v0.1 is based on an EfficientNet architecture, [implemented in PyTorch](https://github.com/lukemelas/EfficientNet-PyTorch). It supports 169 categories*, where each category is either a single biological taxon or a group of related taxa. See the [`megaclassifier_label_spec.ipynb`](https://github.com/microsoft/CameraTraps/blob/master/classification/megaclassifier_label_spec.ipynb) notebook for more details on the categories. The taxonomy used is based on the 2020_09 revision of the taxonomy CSV.
+MegaClassifier is an image classifier. MegaClassifier v0.1 is based on an EfficientNet architecture, [implemented in PyTorch](https://github.com/lukemelas/EfficientNet-PyTorch). It supports 169 categories*, where each category is either a single biological taxon or a group of related taxa. See the [`megaclassifier_label_spec.ipynb`](https://github.com/ecologize/CameraTraps/blob/master/classification/megaclassifier_label_spec.ipynb) notebook for more details on the categories. The taxonomy used is based on the 2020_09 revision of the taxonomy CSV.
 
 The training dataset, splits, and parameters used for v0.1 can be found in `classifier-training/megaclassifier/v0.1_training`. There are two variants of MegaClassifier v0.1. Their average top-1 accuracy (recall) and average top-3 accuracy on the test set across all 169 categories are shown in this table:
 
@@ -172,41 +181,12 @@ This section explains how to run MegaClassifier on new images. To run MegaClassi
 
 ## 1. Run MegaDetector
 
-Run MegaDetector on the new images to get an output JSON file in the format of the Batch API. MegaDetector can be run either locally or via the Batch API.
-
-<details>
-    <summary>Basic instructions for running MegaDetector locally</summary>
-
-We assume that the images are in a local folder `/path/to/images`. Use [AzCopy](http://aka.ms/azcopy) if necessary to download the images from Azure Blob Storage.
-
-From the CameraTraps repo folder, run the following. On a fast GPU, this should process ~3 images per second.
-
-```bash
-# Download the MegaDetector model file
-wget -O md_v4.1.0.pb https://lilablobssc.blob.core.windows.net/models/camera_traps/megadetector/md_v4.1.0/md_v4.1.0.pb
-
-# install TensorFlow v1 and other dependences
-conda env update -f environment-detector.yml --prune
-conda activate cameratraps-detector
-
-# run MegaDetector
-python detection/run_tf_detector_batch.py md_v4.1.0.pb /path/to/images detections.json --recursive --output_relative_filenames
-```
-
-For more details, consult the [MegaDetector README](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md).
-</details>
-
-
-<details>
-    <summary>Instructions for running MegaDetector via Batch API</summary>
-
-See [`api/batch_processing/data_preparation/manage_api_submission.py`](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing/data_preparation/manage_api_submission.py).
-</details>
+First, you need to run MegaDetector on your new images to get an output JSON file, typically using [run_detector_batch.py](https://github.com/ecologize/CameraTraps/blob/main/detection/run_detector_batch.py), though it's also fine to use a third-party tool like [EcoAssist](https://github.com/PetervanLunteren/EcoAssist).  Instructions for running MegaDetector (any version) are [here](https://github.com/ecologize/CameraTraps/blob/main/megadetector.md#using-the-model).
 
 
 ## 2. Crop images
 
-Run `crop_detections.py` to crop the bounding boxes according to the detections JSON. Pass in an Azure Blob Storage container URL if the images are not stored locally and the detections were obtained from the Batch API. The crops are saved to `/path/to/crops`. Unless you have a good reason not to, use the `--square-crops` flag, which crops the tightest square enclosing each bounding box (which may have an arbitrary aspect ratio).
+Run `crop_detections.py` to crop the bounding boxes according to the detections JSON. Pass in an Azure Blob Storage container URL if the images are not stored locally. The crops are saved to `/path/to/crops`. Unless you have a good reason not to, use the `--square-crops` flag, which crops the tightest square enclosing each bounding box (which may have an arbitrary aspect ratio).
 
 ```bash
 python crop_detections.py \
@@ -214,7 +194,6 @@ python crop_detections.py \
     /path/to/crops \
     --images-dir /path/to/images \
     --container-url "https://account.blob.core.windows.net/container?sas_token" \
-    --detector-version "4.1" \
     --threshold 0.8 \
     --save-full-images --square-crops \
     --threads 50 \
@@ -363,7 +342,7 @@ This option is only recommended if you meet all of the following criteria:
 - all of your image files are from a single dataset in a single Azure container
 - none of the images already have cached MegaDetector results
 
-Download all of the images to `/path/to/images/name_of_dataset`. Then, follow the instructions from the [MegaDetector README](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md) to run MegaDetector. Finally, cache the detection results. The commands should be roughly as follows, assuming your terminal is in the `CameraTraps/` folder:
+Download all of the images to `/path/to/images/name_of_dataset`. Then, follow the instructions from the [MegaDetector README](https://github.com/ecologize/CameraTraps/blob/master/megadetector.md) to run MegaDetector. Finally, cache the detection results. The commands should be roughly as follows, assuming your terminal is in the `CameraTraps/` folder:
 
 ```bash
 # Download the MegaDetector model file
@@ -423,7 +402,7 @@ python detect_and_crop.py \
     --run-detector --resume-file $BASE_LOGDIR/resume.json
 ```
 
-When a task finishes running, manually create a JSON file for each task according to the [Batch Detection API response format](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing#api-outputs). Save the JSON file to `$BASE_LOGDIR/batchapi_response/dataset.json`. Then, use `cache_batchapi_outputs.py` to cache these results:
+When a task finishes running, manually create a JSON file for each task according to the [Batch Detection API response format](https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing#api-outputs). Save the JSON file to `$BASE_LOGDIR/batchapi_response/dataset.json`. Then, use `cache_batchapi_outputs.py` to cache these results:
 
 ```bash
 python cache_batchapi_outputs.py \

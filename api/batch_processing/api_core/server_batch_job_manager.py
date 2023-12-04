@@ -40,9 +40,15 @@ class BatchJobManager:
     def create_job(self, job_id: str, detector_model_rel_path: str,
                    input_container_sas: str, use_url: bool):
         log.info(f'BatchJobManager, create_job, job_id: {job_id}')
+
+        pool_id = api_config.POOL_ID
+        if detector_model_rel_path == 'megadetector_v5a/md_v5a.0.0.pt':
+            pool_id = api_config.POOL_ID_V5
+
+
         job = JobAddParameter(
             id=job_id,
-            pool_info=PoolInformation(pool_id=api_config.POOL_ID),
+            pool_info=PoolInformation(pool_id=pool_id),
 
             # set for all tasks in the job
             common_environment_settings=[
@@ -70,7 +76,7 @@ class BatchJobManager:
 
         # cannot execute the scoring script that is in the mounted directory; has to be copied to cwd
         # not luck giving the commandline arguments via formatted string - set as env vars instead
-        score_command = '/bin/bash -c \"cp $AZ_BATCH_NODE_MOUNTS_DIR/batch-api/scripts/score.py . && python score.py\" '
+        score_command = '/bin/bash -c \"cp -R $AZ_BATCH_NODE_MOUNTS_DIR/batch-api/scripts . && python scripts/score_v5.py\" '
 
         num_images_per_task = api_config.NUM_IMAGES_PER_TASK
 

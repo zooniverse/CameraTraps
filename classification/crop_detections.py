@@ -6,7 +6,7 @@ This script takes as input a detections JSON file, usually the output of
 detection/run_tf_detector_batch.py or the output of the Batch API in the
 "Batch processing API output format".
 
-See https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing.
+See https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing.
 
 The script can crop images that are either available locally or that need to be
 downloaded from an Azure Blob Storage container.
@@ -110,12 +110,13 @@ def main(detections_json_path: str,
 
     # get detector version
     if 'info' in js and 'detector' in js['info']:
-        api_det_version = js['info']['detector'].rsplit('v', maxsplit=1)[1]
+        api_det_version = js['info']['detector'] # .rsplit('v', maxsplit=1)[1]
         if detector_version is not None:
-            assert api_det_version == detector_version
+            assert api_det_version == detector_version,\
+            '.json file specifies a detector version of {}, but the caller has specified {}'.format(
+            api_det_version,detector_version)
         else:
             detector_version = api_det_version
-    # assert detector_version is not None
     if detector_version is None:
         detector_version = 'unknown'
 
@@ -130,7 +131,13 @@ def main(detections_json_path: str,
             images_missing_detections.append(img_path)
             continue
         for d in info_dict['detections']:
-            d['category'] = detection_categories[d['category']]
+            if d['category'] not in detection_categories:
+                print('Warning: ignoring detection with category {} for image {}'.format(
+                    d['category'],img_path))                
+                # This will be removed later when we filter for animals
+                d['category'] = 'unsupported'
+            else:
+                d['category'] = detection_categories[d['category']]
 
     images_failed_dload_crop, num_downloads, num_crops = download_and_crop(
         detections=detections,
@@ -216,7 +223,7 @@ def download_and_crop(
         True: os.path.join(cropped_images_dir, '{img_path}___crop{n:>02d}.jpg'),
         False: os.path.join(
             cropped_images_dir,
-            '{img_path}___crop{n:>02d}_' + f'mdv{detector_version}.jpg')
+            '{img_path}___crop{n:>02d}_' + f'{detector_version}.jpg')
     }
 
     pool = futures.ThreadPoolExecutor(max_workers=threads)
@@ -340,11 +347,13 @@ def load_and_crop(img_path: str,
     # try loading image from local directory
     if images_dir is not None:
         full_img_path = os.path.join(images_dir, img_path)
+        debug_path = full_img_path
         if os.path.exists(full_img_path):
             img = load_local_image(full_img_path)
 
     # try to download image from Blob Storage
     if img is None and container_client is not None:
+        debug_path = img_path
         with io.BytesIO() as stream:
             container_client.download_blob(img_path).readinto(stream)
             stream.seek(0)
@@ -358,7 +367,9 @@ def load_and_crop(img_path: str,
             img = load_local_image(stream)
         did_download = True
 
-    assert img is not None, 'image failed to load or download properly'
+    assert img is not None, 'image "{}" failed to load or download properly'.format(
+        debug_path)
+    
     if img.mode != 'RGB':
         img = img.convert(mode='RGB')  # always save as RGB for consistency
 

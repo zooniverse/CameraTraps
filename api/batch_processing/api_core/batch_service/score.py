@@ -111,8 +111,8 @@ def load_image(input_file: Union[str, BytesIO]) -> Image.Image:
     return image
 
 
-#%% TFDetector class, an unmodified *copy* of the class in detection/run_tf_detector.py,
-# so we do not have to import the packages required by run_tf_detector.py
+#%% TFDetector class, an unmodified *copy* of the class in detection/tf_detector.py,
+# so we do not have to import the packages required by run_detector.py
 
 class TFDetector:
     """
@@ -236,7 +236,7 @@ class TFDetector:
             image_id: a path to identify the image; will be in the "file" field of the output object
             detection_threshold: confidence above which to include the detection proposal
         Returns:
-        A dict with the following fields, see the 'images' key in https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
+        A dict with the following fields, see the 'images' key in https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing#batch-processing-api-output-format
             - 'file' (always present)
             - 'max_detection_conf'
             - 'detections', which is a list of detection objects containing keys 'category', 'conf' and 'bbox'

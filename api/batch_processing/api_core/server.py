@@ -64,9 +64,10 @@ def request_detections():
     # required params
 
     caller_id = post_body.get('caller', None)
+
     if caller_id is None or caller_id not in app_config.get_allowlist():
         msg = ('Parameter caller is not supplied or is not on our allowlist. '
-               'Please email cameratraps@microsoft.com to request access.')
+               'Please email cameratraps@lila.science to request access.')
         return make_error(401, msg)
 
     use_url = post_body.get('use_url', False)
@@ -103,6 +104,7 @@ def request_detections():
 
     # check model_version is among the available model versions
     model_version = post_body.get('model_version', '')
+
     if model_version != '':
         model_version = str(model_version)  # in case user used an int
         if model_version not in api_config.MD_VERSIONS_TO_REL_PATH:  # TODO use AppConfig to store model version info

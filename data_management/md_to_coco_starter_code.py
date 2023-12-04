@@ -2,9 +2,13 @@
 # Partially-formed stub to get from MegaDetector output files to COCO Camera Traps data.
 #
 # Was actually written to convert *many* MD .json files to a single CCT file, hence 
-# the loop over .json file.
+# the loop over .json files.
 #
 # THIS CODE HAS NEVER BEEN RUN, it was added as a demonstration of how to do this.  YMMV.
+#
+# You may find a more polished, command-line-ready version of this code at:
+#
+# https://github.com/StewartWILDlab/mdtools
 #
 
 #%% Constants and imports
@@ -111,7 +115,7 @@ for i_entry,entry in enumerate(tqdm(data['images'])):
         
         if category_id != 0:
             ann['bbox'] = detection['bbox']
-            # MegaDetector: [x,y,width,eight] (normalized, origin upper-left)
+            # MegaDetector: [x,y,width,height] (normalized, origin upper-left)
             # CCT: [x,y,width,height] (absolute, origin upper-left)
             ann['bbox'][0] = ann['bbox'][0] * im['width']
             ann['bbox'][1] = ann['bbox'][1] * im['height']

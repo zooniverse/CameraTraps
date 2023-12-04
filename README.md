@@ -1,86 +1,163 @@
-# Overview
+# Announcement
 
-This repo contains the tools for training, running, and evaluating detectors and classifiers for images collected from motion-triggered camera traps.  The core functionality provided is:
+At the core of our mission is the desire to create a harmonious space where conservation scientists from all over the globe can unite, share, and grow. We are expanding the CameraTraps repo to introduce PyTorch Wildlife, a Collaborative Deep Learning Framework for Conservation, where researchers can come together to share and use datasets and deep learning architectures for wildlife conservation.
 
+We've been inspired by the potential and capabilities of Megadetector, and we deeply value its contributions to the community. **As we forge ahead with PyTorch Wildlife, please know that we remain committed to supporting and maintaining Megadetector, ensuring its continued relevance and utility**.
+
+# PyTorch Wildlife: A Collaborative Deep Learning Framework for Conservation
+
+## Version 0.0.0 is out! 
+You can access our current version of PyTorch Wildlife [here!](https://github.com/microsoft/CameraTraps/tree/PytorchWildlife_Dev).
+
+## Core Features
+
+<img src="images/PyTorch_Wildlife_core_figure.png" width="700">
+
+- **Unified Framework**: PyTorch Wildlife integrates four pivotal elements:
+  - Machine Learning Models
+  - Pre-trained Weights
+  - Datasets
+  - Utilities
+ 
+- **Our work**: In the provided graph, boxes outlined in red represent elements that will be added and remained fixed, while those in blue will be part of our development.
+
+- **Inaugural Model**: We're kickstarting with YOLO as our first available model, complemented by pre-trained weights from Megadetector.
+
+- **Expandable Repository**: As we move forward, our platform will welcome new models and pre-trained weights. We're excited to host contributions from global researchers through a dedicated submission platform.
+
+- **Datasets from LILA**: PyTorch Wildlife will also incorporate the vast datasets hosted on LILA, making it a treasure trove for conservation research.
+
+
+
+- **Versatile Utilities**: Our set of utilities spans from visualization tools to task-specific utilities, many inherited from the trusted Megadetector.
+
+- **User Interface Flexibility**: While we provide a foundational user interface, our platform is designed to inspire. We encourage researchers to craft and share their unique interfaces, and we'll list both existing and new UIs from other collaborators for the community's benefit.
+
+Let's shape the future of wildlife research, together!
+
+Below you can find a list of the core elements of PyTorchWildlife.
+<img src="images/Finished_tasks_announcement.png" width="700">
+<img src="images/PTWildlife_core.png" width="700">
+
+# Development roadmap
+Here you can find the milestone roadmap for PyTorch Wildlife on October!
+<img src="images/Finished_tasks_announcement.png" width="700">
+<img src="images/10_PyTorchWildlifeRoadmap_October.png" width="700">
+<img src="images/11_PyTorchWildlifeRoadmap_November.png" width="700">
+<img src="images/12_PyTorchWildlifeRoadmap_December.png" width="700">
+<img src="images/01_PyTorchWildlifeRoadmap_January.png" width="700">
+<img src="images/02_PyTorchWildlifeRoadmap_February.png" width="700">
+
+# MegaDetector Overview
+
+This repo contains the tools for training, running, and evaluating detectors and classifiers for images collected from motion-triggered wildlife cameras.  The core functionality provided is:
+
+- Training and running models, particularly [MegaDetector](megadetector.md), an object detection model that does a pretty good job finding animals, people, and vehicles (and therefore is pretty good at finding empty images) in a variety of terrestrial ecosystems
 - Data parsing from frequently-used camera trap metadata formats into a common format
-- Training and evaluation of detectors, particularly our "[MegaDetector](https://github.com/microsoft/CameraTraps/blob/master/megadetector.md)", which does a pretty good job finding animals, people, and vechicles (and therefore is pretty good at finding empty images) in a variety of terrestrial ecosystems
-- A [batch processing API](https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing) that runs MegaDetector on large image collections, to accelerate population surveys
-- A [real-time API](https://github.com/microsoft/CameraTraps/tree/master/api/synchronous) that runs MegaDetector (and some species classifiers) synchronously, primarily to support anti-poaching scenarios (e.g. see this [blog post](https://customers.microsoft.com/en-us/story/1384184517929343083-wildlife-protection-solutions-nonprofit-ai-for-earth) describing how this API supports [Wildlife Protection Solutions](https://wildlifeprotectionsolutions.org/))
-- A [Web-based demo](https://aka.ms/cameratrapdemo) that calls our real-time API
-- Training and evaluation of species-level classifiers for specific data sets
-- Miscellaneous useful tools for manipulating camera trap data
-- Research experiments we're doing around camera trap data (i.e., some directories are highly experimental and you should take them with a grain of salt)
+- A [batch processing API](https://github.com/ecologize/CameraTraps/tree/main/api/batch_processing) that runs MegaDetector on large image collections, to accelerate population surveys
+- A [real-time API](https://github.com/ecologize/CameraTraps/tree/main/api/synchronous) that runs MegaDetector (and some species classifiers) synchronously, primarily to support anti-poaching scenarios (e.g. see this [blog post](https://customers.microsoft.com/en-us/story/1384184517929343083-wildlife-protection-solutions-nonprofit-ai-for-earth) describing how this API supports [Wildlife Protection Solutions](https://wildlifeprotectionsolutions.org/))
 
-Classifiers and detectors are trained using TensorFlow.
-
-This repo is maintained by folks in the [Microsoft AI for Earth](http://aka.ms/aiforearth) program who like looking at pictures of animals.  I mean, we want to use machine learning to support conservation too, but we also really like looking at pictures of animals.
-
-# Who is using the AI for Earth camera trap tools?
-
-We work with ecologists all over the world to help them spend less time annotating images and more time thinking about conservation.  You can read a little more about how this works on our [AI for Earth camera trap collaborations page](collaborations.md).
-
-You can also read about what we do to support camera trap researchers in our recent [blog post](https://medium.com/microsoftazure/accelerating-biodiversity-surveys-with-azure-machine-learning-9be53f41e674).
-
-Here are a few of the organizations that have used AI for Earth camera trap tools... we're only listing organizations who (a) we know about and (b) have generously allowed us to refer to them here, so if you're using MegaDetector or other tools from this repo and would like to be added to this list, <a href="mailto:cameratraps@lila.science">email us</a>!
-
-* Idaho Department of Fish and Game
-* San Diego Zoo Global
-* University of Washington Quantitative Ecology Lab
-* University of Idaho
-* Borderlands Research Institute at Sul Ross State University
-* Borneo Nature Foundation
-* Parks Canada
-* Australian Wildlife Conservancy
-* Lab of Dr. Bilal Habib at the Wildlife Institute of India
-* Royal Society for the Protection of Birds (RSPB)
-* Wildlife Protection Solutions
-* Island Conservation
-* Synthetaic
-* School of Natural Sciences, University of Tasmania
-* Arizona Department of Environmental Quality
-* Wildlife Research, Oregon Department of Fish and Wildlife
-* National Wildlife Refuge System, Southwest Region, US Fish and Wildlife
-* Mammal Spatial Ecology and Conservation Lab at Washington State University
-* Point No Point Treaty Council
-* SPEA (Portuguese Society for the Study of Birds)
-* Ghost Cat Analytics
-* EcoLogic Consultants Ltd.
-* Smithsonian Northern Great Plains Program
-* Federal University of Amapá, Ecology and Conservation of Amazonian Vertebrates Research Group
-* Hamaarag, The Steinhardt Museum of Natural History, Tel Aviv University
-* Czech University of Life Sciences Prague
-* Ramat Hanadiv Nature Park, Israel
-* TU Berlin, Department of Ecology
-* DC Cat Count, led by the Humane Rescue Alliance
-* Center for Biodiversity and Conservation at the American Museum of Natural History
-* Camelot
-* Graeme Shannon's Research Group at Bangor University 
-* Snapshot USA
-* University of British Columbia Wildlife Coexistence Lab
-* Michigan Department of Natural Resources, Wildlife Division
-* Serra dos Órgãos National Park / ICMBio
-* McLoughlin Lab in Population Ecology, University of Saskatchewan
-* Upper Yellowstone Watershed Group
-* Blumstein lab, UCLA
-* National Park Service Santa Monica Mountains Recreation Area
-* Conservation X Labs
-* The Nature Conservancy in Wyoming
+This repo is maintained by folks at [Ecologize](http://ecologize.org/) who like looking at pictures of animals.  We want to support conservation, of course, but we also really like looking at pictures of animals.
 
 
-# Data
+# What's MegaDetector all about?
 
-This repo does not directly host camera trap data, but we work with our collaborators to make data and annotations available whenever possible on [lila.science](http://lila.science).
-
-
-## MegaDetector
-
-The main model that we train and run using tools in this repo is [MegaDetector](megadetector.md), an object detection model that identifies animals, people, and vehicles in camera trap images.  This model is trained on several hundred thousand bounding boxes from a variety of ecosystems.  Lots more information &ndash; including download links &ndash; is available on the [MegaDetector page](megadetector.md).
+The main model that we train and run using tools in this repo is [MegaDetector](megadetector.md), an object detection model that identifies animals, people, and vehicles in camera trap images.  This model is trained on several hundred thousand bounding boxes from a variety of ecosystems.  Lots more information &ndash; including download links and instructions for running the model &ndash; is available on the [MegaDetector page](megadetector.md).
 
 Here's a "teaser" image of what detector output looks like:
 
 ![Red bounding box on fox](images/detector_example.jpg)
 
 Image credit University of Washington.
+
+
+# How do I get started?
+
+If you're just considering the use of AI in your workflow, and you aren't even sure yet whether MegaDetector would be useful to you, we recommend reading the "[getting started with MegaDetector](collaborations.md)" page.
+
+If you're already familiar with MegaDetector and you're ready to run it on your data (and you have some familiarity with running Python code), see the [MegaDetector README](megadetector.md) for instructions on downloading and running MegaDetector.
+
+
+# Who is using MegaDetector?
+
+We work with ecologists all over the world to help them spend less time annotating images and more time thinking about conservation.  You can read a little more about how this works on our [getting started with MegaDetector](collaborations.md) page.
+
+Here are a few of the organizations that have used MegaDetector... we're only listing organizations who (a) we know about and (b) have given us permission to refer to them here (or have posted publicly about their use of MegaDetector), so if you're using MegaDetector or other tools from this repo and would like to be added to this list, <a href="mailto:cameratraps@lila.science">email us</a>!
+
+* [Arizona Department of Environmental Quality](http://azdeq.gov/)
+* [Blackbird Environmental](https://blackbirdenv.com/)
+* [Camelot](https://camelotproject.org/)
+* [Canadian Parks and Wilderness Society (CPAWS) Northern Alberta Chapter](https://cpawsnab.org/)
+* [Conservation X Labs](https://conservationxlabs.com/)
+* [Czech University of Life Sciences Prague](https://www.czu.cz/en)
+* [EcoLogic Consultants Ltd.](https://www.consult-ecologic.com/)
+* [Estación Biológica de Doñana](http://www.ebd.csic.es/inicio)
+* [Idaho Department of Fish and Game](https://idfg.idaho.gov/)
+* [Island Conservation](https://www.islandconservation.org/)
+* [Myall Lakes Dingo Project](https://carnivorecoexistence.info/myall-lakes-dingo-project/)
+* [Point No Point Treaty Council](https://pnptc.org/)
+* [Ramat Hanadiv Nature Park](https://www.ramat-hanadiv.org.il/en/)
+* [SPEA (Portuguese Society for the Study of Birds)](https://spea.pt/en/)
+* [Synthetaic](https://www.synthetaic.com/)
+* [Taronga Conservation Society](https://taronga.org.au/)
+* [The Nature Conservancy in Wyoming](https://www.nature.org/en-us/about-us/where-we-work/united-states/wyoming/)
+* [TrapTagger](https://wildeyeconservation.org/trap-tagger-about/)
+* [Upper Yellowstone Watershed Group](https://www.upperyellowstone.org/)
+
+* [Applied Conservation Macro Ecology Lab](http://www.acmelab.ca/), University of Victoria
+* [Banff National Park Resource Conservation](https://www.pc.gc.ca/en/pn-np/ab/banff/nature/conservation), Parks Canada
+* [Blumstein Lab](https://blumsteinlab.eeb.ucla.edu/), UCLA
+* [Borderlands Research Institute](https://bri.sulross.edu/), Sul Ross State University
+* [Capitol Reef National Park](https://www.nps.gov/care/index.htm) / Utah Valley University
+* [Center for Biodiversity and Conservation](https://www.amnh.org/research/center-for-biodiversity-conservation), American Museum of Natural History
+* [Centre for Ecosystem Science](https://www.unsw.edu.au/research/), UNSW Sydney
+* [Cross-Cultural Ecology Lab](https://crossculturalecology.net/), Macquarie University
+* [DC Cat Count](https://hub.dccatcount.org/), led by the Humane Rescue Alliance
+* [Department of Fish and Wildlife Sciences](https://www.uidaho.edu/cnr/departments/fish-and-wildlife-sciences), University of Idaho
+* [Department of Wildlife Ecology and Conservation](https://wec.ifas.ufl.edu/), University of Florida
+* [Ecology and Conservation of Amazonian Vertebrates Research Group](https://www.researchgate.net/lab/Fernanda-Michalski-Lab-4), Federal University of Amapá
+* [Gola Forest Programma](https://www.rspb.org.uk/our-work/conservation/projects/scientific-support-for-the-gola-forest-programme/), Royal Society for the Protection of Birds (RSPB)
+* [Graeme Shannon's Research Group](https://wildliferesearch.co.uk/group-1), Bangor University 
+* [Hamaarag](https://hamaarag.org.il/), The Steinhardt Museum of Natural History, Tel Aviv University
+* [Institut des Science de la Forêt Tempérée](https://isfort.uqo.ca/) (ISFORT), Université du Québec en Outaouais
+* [Lab of Dr. Bilal Habib](https://bhlab.in/about), the Wildlife Institute of India
+* [Mammal Spatial Ecology and Conservation Lab](https://labs.wsu.edu/dthornton/), Washington State University
+* [McLoughlin Lab in Population Ecology](http://mcloughlinlab.ca/lab/), University of Saskatchewan
+* [National Wildlife Refuge System, Southwest Region](https://www.fws.gov/about/region/southwest), U.S. Fish & Wildlife Service
+* [Northern Great Plains Program](https://nationalzoo.si.edu/news/restoring-americas-prairie), Smithsonian
+* [Quantitative Ecology Lab](https://depts.washington.edu/sefsqel/), University of Washington
+* [Santa Monica Mountains Recreation Area](https://www.nps.gov/samo/index.htm), National Park Service
+* [Seattle Urban Carnivore Project](https://www.zoo.org/seattlecarnivores), Woodland Park Zoo
+* [Serra dos Órgãos National Park](https://www.icmbio.gov.br/parnaserradosorgaos/), ICMBio
+* [Snapshot USA](https://emammal.si.edu/snapshot-usa), Smithsonian
+* [Wildlife Coexistence Lab](https://wildlife.forestry.ubc.ca/), University of British Columbia
+* [Wildlife Research](https://www.dfw.state.or.us/wildlife/research/index.asp), Oregon Department of Fish and Wildlife
+* [Wildlife Division](https://www.michigan.gov/dnr/about/contact/wildlife), Michigan Department of Natural Resources
+
+* Department of Ecology, TU Berlin
+* Ghost Cat Analytics
+* Protected Areas Unit, Canadian Wildlife Service
+
+* [School of Natural Sciences](https://www.utas.edu.au/natural-sciences), University of Tasmania ([story](https://www.utas.edu.au/about/news-and-stories/articles/2022/1204-innovative-camera-network-keeps-close-eye-on-tassie-wildlife))
+* [Kenai National Wildlife Refuge](https://www.fws.gov/refuge/kenai), U.S. Fish & Wildlife Service ([story](https://www.peninsulaclarion.com/sports/refuge-notebook-new-technology-increases-efficiency-of-refuge-cameras/))
+
+* [Australian Wildlife Conservancy](https://www.australianwildlife.org/) ([blog](https://www.australianwildlife.org/cutting-edge-technology-delivering-efficiency-gains-in-conservation/), [blog](https://www.australianwildlife.org/efficiency-gains-at-the-cutting-edge-of-technology/))
+* [Felidae Conservation Fund](https://felidaefund.org/) ([WildePod platform](https://wildepod.org/)) ([blog post](https://abhaykashyap.com/blog/ai-powered-camera-trap-image-annotation-system/))
+* [Alberta Biodiversity Monitoring Institute (ABMI)](https://www.abmi.ca/home.html) ([WildTrax platform](https://www.wildtrax.ca/)) ([blog post](https://wildcams.ca/blog/the-abmi-visits-the-zoo/))
+* [Shan Shui Conservation Center](http://en.shanshui.org/) ([blog post](https://mp.weixin.qq.com/s/iOIQF3ckj0-rEG4yJgerYw?fbclid=IwAR0alwiWbe3udIcFvqqwm7y5qgr9hZpjr871FZIa-ErGUukZ7yJ3ZhgCevs)) ([translated blog post](https://mp-weixin-qq-com.translate.goog/s/iOIQF3ckj0-rEG4yJgerYw?fbclid=IwAR0alwiWbe3udIcFvqqwm7y5qgr9hZpjr871FZIa-ErGUukZ7yJ3ZhgCevs&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp))
+* [Irvine Ranch Conservancy](http://www.irconservancy.org/) ([story](https://www.ocregister.com/2022/03/30/ai-software-is-helping-researchers-focus-on-learning-about-ocs-wild-animals/))
+* [Wildlife Protection Solutions](https://wildlifeprotectionsolutions.org/) ([story](https://customers.microsoft.com/en-us/story/1384184517929343083-wildlife-protection-solutions-nonprofit-ai-for-earth), [story](https://www.enterpriseai.news/2023/02/20/ai-helps-wildlife-protection-solutions-safeguard-endangered-species/))
+
+* [Road Ecology Center](https://roadecology.ucdavis.edu/), University of California, Davis ([Wildlife Observer Network platform](https://wildlifeobserver.net/))
+* [The Nature Conservancy in California](https://www.nature.org/en-us/about-us/where-we-work/united-states/california/) ([Animl platform](https://github.com/tnc-ca-geo/animl-frontend))
+* [San Diego Zoo Wildlife Alliance](https://science.sandiegozoo.org/)  ([Animl R package](https://github.com/conservationtechlab/animl))
+
+
+
+
+# Data
+
+This repo does not directly host camera trap data, but we work with our collaborators to make data and annotations available whenever possible on [lila.science](http://lila.science).
 
 
 # Contact
@@ -95,35 +172,30 @@ This repo is organized into the following folders...
 
 ## api
 
-Code for hosting our models as an API, either for synchronous operation (e.g. for real-time inference or for our Web-based demo) or as a batch process (for large biodiversity surveys).
+Code for hosting our models as an API, either for synchronous operation (i.e., for real-time inference) or as a batch process (for large biodiversity surveys).  Common operations one might do after running MegaDetector &ndash; e.g. [generating preview pages to summarize your results](https://github.com/ecologize/CameraTraps/blob/main/api/batch_processing/postprocessing/postprocess_batch_results.py), [separating images into different folders based on AI results](https://github.com/ecologize/CameraTraps/blob/main/api/batch_processing/postprocessing/separate_detections_into_folders.py), or [converting results to a different format](https://github.com/ecologize/CameraTraps/blob/main/api/batch_processing/postprocessing/convert_output_format.py) &ndash; also live in this folder, within the [api/batch_processing/postprocessing](https://github.com/ecologize/CameraTraps/tree/main/api/batch_processing/postprocessing) folder.
 
 
 ## classification
 
 Experimental code for training species classifiers on new data sets, generally trained on MegaDetector crops.  Currently the main pipeline described in this folder relies on a large database of labeled images that is not publicly available; therefore, this folder is not yet set up to facilitate training of your own classifiers.  However, it is useful for <i>users</i> of the classifiers that we train, and contains some useful starting points if you are going to take a "DIY" approach to training classifiers on cropped images.  
 
-The folder also contains a [tutorial](https://github.com/microsoft/CameraTraps/blob/master/archive/classification_marcel/TUTORIAL.md) on training your own classifier using MegaDetector, which has no dependencies on private data, although this tutorial uses somehwat obsolete frameworks and may not be the best starting point for new projects.
-
 All that said, here's another "teaser image" of what you get at the end of training and running a classifier:
 
 <img src="images/warthog_classifications.jpg" width="700">
+
 
 ## data_management
 
 Code for:
 
-- Converting frequently-used metadata formats to [COCO Camera Traps](https://github.com/Microsoft/CameraTraps/blob/master/data_management/README.md#coco-cameratraps-format) format
-- Creating, visualizing, and  editing COCO Camera Traps .json databases
-- Generating tfrecords
-
-## demo
-
-Source for the Web-based demo of our MegaDetector model (we'll release the demo soon!).
+* Converting frequently-used metadata formats to [COCO Camera Traps](https://github.com/ecologize/CameraTraps/blob/main/data_management/README.md#coco-cameratraps-format) format
+* Converting the output of AI models (especially [YOLOv5](https://github.com/ecologize/CameraTraps/blob/main/api/batch_processing/postprocessing/convert_output_format.py)) to the format used for AI results throughout this repo
+* Creating, visualizing, and  editing COCO Camera Traps .json databases
 
 
 ## detection
 
-Code for training and evaluating detectors.
+Code for training, running, and evaluating MegaDetector.
 
 
 ## research
@@ -133,88 +205,25 @@ Ongoing research projects that use this repository in one way or another; as of 
 
 ## sandbox
 
-Random things that don't fit in any other directory.  Currently contains a single file, a not-super-useful but super-duper-satisfying and mostly-successful attempt to use OCR to pull metadata out of image pixels in a fairly generic way, to handle those pesky cases when image metadata is lost.
+Random things that don't fit in any other directory.  For example:
+
+* A not-super-useful but super-duper-satisfying and mostly-successful attempt to use OCR to pull metadata out of image pixels in a fairly generic way, to handle those pesky cases when image metadata is lost.
+* Experimental postprocessing scripts that were built for a single use case
 
 
-# Installation
+## taxonomy-mapping
 
-We use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) to manage our Python package dependencies. Conda is a package and environment management system. You can install a lightweight distribution of conda (Miniconda) for your OS via installers at [https://docs.conda.io/en/latest/miniconda.html](https://docs.conda.io/en/latest/miniconda.html).
+Code to facilitate mapping data-set-specific categories (e.g. "lion", which means very different things in Idaho vs. South Africa) to a standard taxonomy.
 
-## Initial setup
 
-### Utility and visualization scripts
+## test-images
 
-The required Python packages for running utility and visualization scripts in this repo are listed in [environment.yml](environment.yml).  To set up your environment for these scripts, in your shell, navigate to the root directory of this repo and issue the following command to create a virtual environment via conda called `cameratraps` (specified in the environment file) and install the required packages:
+A handful of images from [LILA](https://lila.science) that facilitate testing and debugging.
 
-```
-conda env create --file environment.yml
-```
 
-For unix users, you need to have gcc installed in order to compile the pip packages. If you do not already have gcc installed, run the following command before creating the conda environment:
+## visualization
 
-```bash
-sudo apt update
-sudo apt install build-essential
-```
-
-### Machine learning scripts
-
-Scripts that execute machine learning code &ndash; specifically, scripts in the folders `api`, `detection`, and `classification` &ndash; require additional depdendencies.  In particular, the `detection/run_tf_detector*.py` scripts should use [environment-detector.yml](environment-detector.yml) to set up the environment, as follows:
-
-```
-conda env create --file environment-detector.yml
-```
-
-### Troubleshooting
-
-If you run into an error while creating either of the above environments, try updating conda to version 4.5.11 or above. Check the version of conda using `conda --version`.
-
-## Usage
-
-To enter the conda virtual environment at your current shell, run:
-
-`conda activate cameratraps`
-
-...or, if you used the environment-detector.yml file above:
-
-`conda activate cameratraps-detector`
-
-You should see `(cameratraps)` prepended to the command line prompt. Invoking `python` or `jupyter notebook` will now be using the interpreter and packages available in this virtual env.
-
-To exit the virtual env, issue `conda deactivate`.
-
-## Add additional packages
-
-If you need to use additional packages, add them to the environment file and run
-
-```bash
-conda env update --name cameratraps --file environment.yml --prune
-```
-or
-```bash
-conda env update --name cameratraps-detector --file environment-detector.yml --prune
-```
-
-## Other notes
-
-In some scripts, we also assume that you have the [AI for Earth utilities repo](https://github.com/Microsoft/ai4eutils) (`ai4eutils`) cloned and its path appended to `PYTHONPATH`. You can append a path to `PYTHONPATH` for the current shell session by executing the following on Windows:
-
-```set PYTHONPATH="%PYTHONPATH%;c:\wherever_you_put_the_ai4eutils_repo"```
-
-You can do this with the following on Linux:
-
-```export PYTHONPATH="$PYTHONPATH:/absolute/path/to/repo/ai4eutils"```
-
-Adding this line to your `~/.bashrc` (on Linux) modifies `PYTHONPATH` permanently.
-
-We also do our best to follow [Google's Python Style Guide](http://google.github.io/styleguide/pyguide.html), and we have adopted their `pylintrc` file, with the following differences:
-- indent code blocks with 4 spaces (instead of 2)
-
-To lint a file, run `pylint` with the CameraTraps repo folder as the current working directory. This allows pylint to recognize the `pylintrc` file. For example,
-
-```bash
-pylint classification/train_classifier.py
-```
+Shared tools for visualizing images with ground truth and/or predicted annotations.
 
 
 # Gratuitous pretty camera trap picture
@@ -224,20 +233,6 @@ pylint classification/train_classifier.py
 Image credit USDA, from the [NACTI](http://lila.science/datasets/nacti) data set.
 
 
-# Contributing
-
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit [cla.microsoft.com](https://cla.microsoft.com).
-
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
 ## License
 
-This repository is licensed with the [MIT license](https://github.com/Microsoft/dotnet/blob/master/LICENSE).
+This repository is licensed with the [MIT license](https://github.com/Microsoft/dotnet/blob/main/LICENSE).

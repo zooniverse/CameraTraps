@@ -18,6 +18,7 @@ import sys
 import time
 from itertools import compress
 from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 
 import pandas as pd
 from tqdm import tqdm
@@ -47,6 +48,9 @@ class DbVizOptions:
     add_search_links = False
     include_filename_links = False
     
+    box_thickness = 4
+    box_expansion = 0
+    
     # These are mutually exclusive; both are category names, not IDs
     classes_to_exclude = None
     classes_to_include = None
@@ -59,7 +63,12 @@ class DbVizOptions:
     pathsep_replacement = '' # '~'
 
     # Control rendering parallelization
-    parallelize_rendering_n_cores = 100
+    parallelize_rendering_n_cores = 25
+    
+    # Process-based parallelization in this function is currently unsupported
+    # due to pickling issues I didn't care to look at, but I'm going to just
+    # flip this with a warning, since I intend to support it in the future.
+    parallelize_rendering_with_threads = True
     parallelize_rendering = False
     
 
@@ -76,7 +85,7 @@ def image_filename_to_path(image_file_name, image_base_dir, pathsep_replacement=
 
 #%% Core functions
 
-def process_images(db_path,output_dir,image_base_dir,options=None):
+def process_images(db_path, output_dir, image_base_dir, options=None):
     """
     Writes images and html to output_dir to visualize the annotations in the json file
     db_path.
@@ -91,10 +100,19 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
     if options is None:
         options = DbVizOptions()
     
+    if not options.parallelize_rendering_with_threads:
+        print('Warning: process-based parallelization is not yet supported by visualize_db')
+        options.parallelize_rendering_with_threads = True
+        
     print(options.__dict__)
     
+    if image_base_dir.startswith('http'):
+        if not image_base_dir.endswith('/'):
+            image_base_dir += '/'
+    else:
+        assert(os.path.isdir(image_base_dir))
+            
     os.makedirs(os.path.join(output_dir, 'rendered_images'), exist_ok=True)
-    assert(os.path.isdir(image_base_dir))
     
     if isinstance(db_path,str):
         assert(os.path.isfile(db_path))    
@@ -134,8 +152,9 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
                 
     # Optionally include/remove images with specific labels, *before* sampling
         
-    assert (not ((options.classes_to_exclude is not None) and (options.classes_to_include is not None))), \
-        'Cannot specify an inclusion and exclusion list'
+    assert (not ((options.classes_to_exclude is not None) and \
+                 (options.classes_to_include is not None))), \
+                 'Cannot specify an inclusion and exclusion list'
         
     if (options.classes_to_exclude is not None) or (options.classes_to_include is not None):
      
@@ -188,17 +207,21 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
     rendering_info = []
     
     print('Preparing rendering list')
-    # iImage = 0
-    for iImage in tqdm(range(len(df_img))):
-        
-        img = df_img.iloc[iImage]
+    
+    for iImage,img in tqdm(df_img.iterrows(),total=len(df_img)):
         
         img_id = img['id']
+        assert img_id is not None
+        
         img_relative_path = img['file_name']
         
-        img_path = os.path.join(image_base_dir, image_filename_to_path(img_relative_path, image_base_dir))
+        if image_base_dir.startswith('http'):
+            img_path = image_base_dir + img_relative_path
+        else:
+            img_path = os.path.join(image_base_dir, 
+                                    image_filename_to_path(img_relative_path, image_base_dir))
     
-        annos_i = df_anno.loc[df_anno['image_id'] == img_id, :]  # all annotations on this image
+        annos_i = df_anno.loc[df_anno['image_id'] == img_id, :] # all annotations on this image
     
         bboxes = []
         boxClasses = []
@@ -227,7 +250,8 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
             categoryName = label_map[categoryID]
             if options.add_search_links:
                 categoryName = categoryName.replace('"','')
-                categoryName = '<a href="https://www.bing.com/images/search?q={}">{}</a>'.format(categoryName,categoryName)
+                categoryName = '<a href="https://www.bing.com/images/search?q={}">{}</a>'.format(
+                    categoryName,categoryName)
             imageCategories.add(categoryName)
             
             if 'bbox' in anno:
@@ -238,22 +262,27 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
                 bboxes.append(bbox)
                 boxClasses.append(anno['category_id'])
         
+        # ...for each of this image's annotations
+        
         imageClasses = ', '.join(imageCategories)
                 
-        file_name = '{}_gt.jpg'.format(img_id.lower().split('.jpg')[0])
+        img_id_string = str(img_id).lower()        
+        file_name = '{}_gt.jpg'.format(img_id_string.split('.jpg')[0])
         file_name = file_name.replace('/', '~').replace('\\','~').replace(':','~')
         
         rendering_info.append({'bboxes':bboxes, 'boxClasses':boxClasses, 'img_path':img_path,
                                'output_file_name':file_name})
                 
-        labelLevelString = ''
+        labelLevelString = ' '
         if len(annotationLevelForImage) > 0:
             labelLevelString = ' (annotation level: {})'.format(annotationLevelForImage)
             
         if 'frame_num' in img and 'seq_num_frames' in img:
             frameString = ' frame: {} of {}, '.format(img['frame_num'],img['seq_num_frames'])
+        elif 'frame_num' in img:
+            frameString = ' frame: {}, '.format(img['frame_num'])
         else:
-            frameString = ' (no sequence information available)'
+            frameString = ' '
         
         filename_text = img_relative_path
         if options.include_filename_links:
@@ -262,13 +291,12 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
         # We're adding html for an image before we render it, so it's possible this image will
         # fail to render.  For applications where this script is being used to debua a database
         # (the common case?), this is useful behavior, for other applications, this is annoying.
-        #
-        # TODO: optionally write html only for images where rendering succeeded
         images_html.append({
             'filename': '{}/{}'.format('rendered_images', file_name),
             'title': '{}<br/>{}, num boxes: {}, {}class labels: {}{}'.format(
                 filename_text, img_id, len(bboxes), frameString, imageClasses, labelLevelString),
-            'textStyle': 'font-family:verdana,arial,calibri;font-size:80%;text-align:left;margin-top:20;margin-bottom:5'
+            'textStyle': 'font-family:verdana,arial,calibri;font-size:80%;' + \
+                'text-align:left;margin-top:20;margin-bottom:5'
         })
     
     # ...for each image
@@ -280,21 +308,29 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
         bboxClasses = rendering_info['boxClasses']
         output_file_name = rendering_info['output_file_name']
         
-        if not os.path.exists(img_path):
-            print('Image {} cannot be found'.format(img_path))
-            return False
+        if not img_path.startswith('http'):
+            if not os.path.exists(img_path):
+                print('Image {} cannot be found'.format(img_path))
+                return False
             
         try:
             original_image = vis_utils.open_image(img_path)
             original_size = original_image.size
-            image = vis_utils.resize_image(original_image, options.viz_size[0], options.viz_size[1])
+            if options.viz_size[0] == -1 and options.viz_size[1] == -1:
+                image = original_image
+            else:
+                image = vis_utils.resize_image(original_image, options.viz_size[0],
+                                               options.viz_size[1])
         except Exception as e:
             print('Image {} failed to open. Error: {}'.format(img_path, e))
             return False
             
         vis_utils.render_db_bounding_boxes(boxes=bboxes, classes=bboxClasses,
                                            image=image, original_size=original_size,
-                                           label_map=label_map)
+                                           label_map=label_map,
+                                           thickness=options.box_thickness,
+                                           expansion=options.box_expansion)
+        
         image.save(os.path.join(output_dir, 'rendered_images', output_file_name))
         return True
     
@@ -302,17 +338,35 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
     
     print('Rendering images')
     start_time = time.time()
+    
     if options.parallelize_rendering:
-        if options.parallelize_rendering_n_cores is None:
-            pool = ThreadPool()
+        
+        if options.parallelize_rendering_with_threads:
+            worker_string = 'threads'
         else:
-            print('Rendering images with {} workers'.format(options.parallelize_rendering_n_cores))
-            pool = ThreadPool(options.parallelize_rendering_n_cores)
-        rendering_success = tqdm(list(pool.imap(render_image_info, rendering_info)), total=len(rendering_info))
+            worker_string = 'processes'
+            
+        if options.parallelize_rendering_n_cores is None:
+            if options.parallelize_rendering_with_threads:
+                pool = ThreadPool()
+            else:
+                pool = Pool()
+        else:
+            if options.parallelize_rendering_with_threads:
+                pool = ThreadPool(options.parallelize_rendering_n_cores)
+            else:
+                pool = Pool(options.parallelize_rendering_n_cores)
+            print('Rendering images with {} {}'.format(options.parallelize_rendering_n_cores,
+                                                       worker_string))            
+        rendering_success = list(tqdm(pool.imap(render_image_info, rendering_info),
+                                 total=len(rendering_info)))
+        
     else:
+        
         rendering_success = []
         for file_info in tqdm(rendering_info):        
             rendering_success.append(render_image_info(file_info))
+            
     elapsed = time.time() - start_time
     
     print('Rendered {} images in {} ({} successful)'.format(
@@ -328,6 +382,7 @@ def process_images(db_path,output_dir,image_base_dir,options=None):
         htmlOptions['headerHtml'] = '<h1>Sample annotations from {}</h1>'.format(db_path)
     else:
         htmlOptions['headerHtml'] = '<h1>Sample annotations</h1>'
+        
     write_html_image_list(
             filename=htmlOutputFile,
             images=images_html,
@@ -360,7 +415,7 @@ def main():
     parser.add_argument('output_dir', action='store', type=str, 
                         help='Output directory for html and rendered images')
     parser.add_argument('image_base_dir', action='store', type=str, 
-                        help='Base directory for input images')
+                        help='Base directory (or URL) for input images')
 
     parser.add_argument('--num_to_visualize', action='store', type=int, default=None, 
                         help='Number of images to visualize (randomly drawn) (defaults to all)')

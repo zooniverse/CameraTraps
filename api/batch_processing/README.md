@@ -1,6 +1,6 @@
 # Camera trap batch processing API user guide
 
-Though most of our users either use the [MegaDetector](https://github.com/Microsoft/CameraTraps#megadetector) model directly or work with us to run MegaDetector on the cloud, we also offer an open-source reference implementation for a an API that processes a large quantity of camera trap images, to support  a variety of online scenarios. The output is most helpful for separating empty from non-empty images based on a detector confidence threshold that you select, and putting bounding boxes around animals, people, and vehicles to help manual review proceed more quickly.  If you are interested in setting up an endpoint to process very small numbers of images for real-time applications (e.g. for anti-poaching applications), see the source for our [real-time camera trap image processing API](https://aiforearth.portal.azure-api.net/docs/services/ai-for-earth-camera-trap-detection-api/).
+Though most of our users either use the [MegaDetector](https://github.com/ecologize/CameraTraps#megadetector) model directly or work with us to run MegaDetector on the cloud, we also offer an open-source reference implementation for a an API that processes a large quantity of camera trap images, to support  a variety of online scenarios. The output is most helpful for separating empty from non-empty images based on a detector confidence threshold that you select, and putting bounding boxes around animals, people, and vehicles to help manual review proceed more quickly.  If you are interested in setting up an endpoint to process very small numbers of images for real-time applications (e.g. for anti-poaching applications), see the source for our [real-time camera trap image processing API](https://github.com/ecologize/CameraTraps/tree/main/api/synchronous).
 
 With the batch processing API, you can process a batch of up to a few million images in one request to the API. If in addition you have some images that are labeled, we can evaluate the performance of the MegaDetector on your labeled images (see [Post-processing tools](#post-processing-tools)).
 
@@ -191,7 +191,7 @@ Note that the field `Status` in the returned body is capitalized (since July 202
 
 The URL to the output file is valid for 180 days from the time the request has finished. If you neglected to retrieve them before the link expired, contact us with the RequestID and we can send the results to you. 
 
-The output file is a JSON in the format described below, last updated in February 2021 (`"format_version": "1.1"`).
+The output file is a JSON in the format described below.
 
 
 #### Batch processing API output format
@@ -205,11 +205,19 @@ Example output with both detection and classification results:
 ```json
 {
     "info": {
-        "detector": "megadetector_v3",
+        "format_version": "1.3",
+        "detector": "md_v4.1.0.pb",
         "detection_completion_time": "2019-05-22 02:12:19",
         "classifier": "ecosystem1_v2",
         "classification_completion_time": "2019-05-26 01:52:08",
-        "format_version": "1.1"
+        "detector_metadata": {
+           "megadetector_version":"v4.1.0",
+           "typical_detection_threshold":0.8,
+           "conservative_detection_threshold":0.6
+        }
+        "classifier_metadata": {
+           "typical_classification_threshold":0.75
+        }
     },
     "detection_categories": {
         "1": "animal",
@@ -225,9 +233,8 @@ Example output with both detection and classification results:
     },
     "images": [
         {
-            "file": "path/from/base/dir/image1.jpg",
-            "meta": "a string of metadata if it was available in the list at images_requested_json_sas",
-            "max_detection_conf": 0.926,
+            "file": "path/from/base/dir/image_with_animal.jpg",
+            "meta": "optional free-text metadata",
             "detections": [
                 {
                     "category": "1",
@@ -247,21 +254,32 @@ Example output with both detection and classification results:
             ]
         },
         {
-            "file": "/path/from/base/dir/image2.jpg",
+            "file": "/path/from/base/dir/empty_image.jpg",
             "meta": "",
-            "max_detection_conf": 0,
             "detections": []
         },
         {
-            "file": "/path/from/base/dir2/corrupted.jpg",
+            "file": "/path/from/base/dir2/corrupted_image.jpg",
             "failure": "Failure image access"
         }
     ]
 }
 ```
 
-A full output example computed on the Snapshot Serengeti data can be found [here](http://dolphinvm.westus2.cloudapp.azure.com/data/snapshot_serengeti/serengeti_val_detections_from_pkl_MDv1_20190528_w_classifications.json).
+##### Model metadata
 
+The 'detector' field (within the 'info' field) specifies the filename of the detector model that produced this results file.  It was omitted in old files generated with run_detector_batch.py, so with extremely high probability, if this field is not present, you can assume the file was generated with MegaDetector v4.
+
+In newer files, this should contain the filename (base name only) of the model file, which typically will be one of:
+
+* megadetector_v4.1 (MegaDetector v4, run via the batch API) 
+* md_v4.1.0.pb (MegaDetector v4, run locally) 
+* md_v5a.0.0.pt (MegaDetector v5a) 
+* md_v5b.0.0.pt (MegaDetector v5b) 
+
+This string is used by some tools to choose appropriate default confidence values, which depend on the model version.  If you change the name of the MegaDetector file, you will break this convention, and YMMV.
+ 
+The "detector_metadata" and "classifier_metadata" fields are also optionally added as of format version 1.2.  These currently contain useful default confidence values for downstream tools (particularly Timelapse), but we strongly recommend against blindly trusting these defaults; always explore your data before choosing a confidence threshold, as the optimal value can vary widely.
 
 ##### Detector outputs
 
@@ -278,8 +296,6 @@ The detection category `category` can be interpreted using the `detection_catego
 Detection categories not listed here are allowed by this format specification, but should be treated as "no detection".
 
 When the detector model detects no animal (or person or vehicle), the confidence `conf` is shown as 0.0 (not confident that there is an object of interest) and the `detections` field is an empty list.
-
-All detections above the confidence threshold of 0.1 are recorded in the output file.
 
 
 ##### Classifier outputs

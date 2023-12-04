@@ -20,6 +20,8 @@ from tqdm import tqdm
 from api.batch_processing.postprocessing.load_api_results import load_api_results_csv
 from data_management.annotations import annotation_constants
 
+import ct_utils
+
 CONF_DIGITS = 3
 
 
@@ -38,54 +40,92 @@ def convert_json_to_csv(input_path,output_path=None,min_confidence=None,
     
     # We add an output column for each class other than 'empty', 
     # containing the maximum probability of  that class for each image
-    n_non_empty_categories = len(annotation_constants.annotation_bbox_categories) - 1
-    category_column_names = []
+    n_non_empty_detection_categories = len(annotation_constants.annotation_bbox_categories) - 1
+    detection_category_column_names = []
     assert annotation_constants.annotation_bbox_category_id_to_name[0] == 'empty'
-    for cat_id in range(1,n_non_empty_categories+1):
+    for cat_id in range(1,n_non_empty_detection_categories+1):
         cat_name = annotation_constants.annotation_bbox_category_id_to_name[cat_id]
-        category_column_names.append('max_conf_' + cat_name)
+        detection_category_column_names.append('max_conf_' + cat_name)
+    
+    n_classification_categories = 0
+    
+    if 'classification_categories' in json_output.keys():
+        classification_category_id_to_name = json_output['classification_categories']
+        classification_category_ids = list(classification_category_id_to_name.keys())
+        classification_category_id_to_column_number = {}
+        classification_category_column_names = []
+        for i_category,category_id in enumerate(classification_category_ids):
+            category_name = classification_category_id_to_name[category_id].\
+                replace(' ','_').replace(',','')
+            classification_category_column_names.append('max_classification_conf_' + category_name)
+            classification_category_id_to_column_number[category_id] = i_category
+
+        n_classification_categories = len(classification_category_ids)
         
     print('Iterating through results...')
+    
+    # i_image = 0; im = json_output['images'][i_image]
     for im in tqdm(json_output['images']):
+        
+        image_id = im['file']
+        
         if 'failure' in im and im['failure'] is not None:
-            print('Skipping failed image', im['failure'])
+            row = [image_id, 'failure', im['failure']]
+            rows.append(row)
+            print('Skipping failed image {} ({})'.format(im['file'],im['failure']))
             continue
 
-        image_id = im['file']
-        max_conf = im['max_detection_conf']
+        max_conf = ct_utils.get_max_conf(im)
         detections = []
-        max_category_probabilities = [None] * n_non_empty_categories
-                
+        max_detection_category_probabilities = [None] * n_non_empty_detection_categories
+        max_classification_category_probabilities = [0] * n_classification_categories
+              
+        # d = im['detections'][0]
         for d in im['detections']:
             
             # Skip sub-threshold detections
             if (min_confidence is not None) and (d['conf'] < min_confidence):
                 continue
             
-            detection = d['bbox']
+            input_bbox = d['bbox']
             
             # Our .json format is xmin/ymin/w/h
             #
             # Our .csv format was ymin/xmin/ymax/xmax
-            xmin = detection[0]
-            ymin = detection[1]
-            xmax = detection[0] + detection[2]
-            ymax = detection[1] + detection[3]
-            detection = [ymin, xmin, ymax, xmax]
+            xmin = input_bbox[0]
+            ymin = input_bbox[1]
+            xmax = input_bbox[0] + input_bbox[2]
+            ymax = input_bbox[1] + input_bbox[3]
+            output_detection = [ymin, xmin, ymax, xmax]
                 
-            detection.append(d['conf'])
+            output_detection.append(d['conf'])
             
             # Category 0 is empty, for which we don't have a column, so the max
             # confidence for category N goes in column N-1
-            category_id = int(d['category'])
-            assert category_id > 0 and category_id <= n_non_empty_categories
-            category_column = category_id - 1
-            category_max = max_category_probabilities[category_column]
-            if category_max is None or d['conf'] > category_max:
-                max_category_probabilities[category_column] = d['conf']
+            detection_category_id = int(d['category'])
+            assert detection_category_id > 0 and detection_category_id <= \
+                n_non_empty_detection_categories
+            detection_category_column = detection_category_id - 1
+            detection_category_max = max_detection_category_probabilities[detection_category_column]
+            if detection_category_max is None or d['conf'] > detection_category_max:
+                max_detection_category_probabilities[detection_category_column] = d['conf']
             
-            detection.append(category_id)
-            detections.append(detection)
+            output_detection.append(detection_category_id)
+            detections.append(output_detection)
+    
+            if 'classifications' in d:
+                assert n_classification_categories > 0,\
+                    'Oops, I have classification results, but no classification metadata'
+                for c in d['classifications']:
+                    category_id = c[0]
+                    p = c[1]
+                    category_index = classification_category_id_to_column_number[category_id]
+                    if (max_classification_category_probabilities[category_index] < p):
+                        max_classification_category_probabilities[category_index] = p
+                
+                # ...for each classification
+                
+            # ...if we have classification results for this detection
             
         # ...for each detection
         
@@ -94,7 +134,8 @@ def convert_json_to_csv(input_path,output_path=None,min_confidence=None,
             detection_string = json.dumps(detections)
             
         row = [image_id, max_conf, detection_string]
-        row.extend(max_category_probabilities)
+        row.extend(max_detection_category_probabilities)
+        row.extend(max_classification_category_probabilities)
         rows.append(row)
         
     # ...for each image
@@ -103,7 +144,9 @@ def convert_json_to_csv(input_path,output_path=None,min_confidence=None,
     with open(output_path, 'w', newline='', encoding=output_encoding) as f:
         writer = csv.writer(f, delimiter=',')
         header = ['image_path', 'max_confidence', 'detections']
-        header.extend(category_column_names)
+        header.extend(detection_category_column_names)
+        if n_classification_categories > 0:
+            header.extend(classification_category_column_names)
         writer.writerow(header)
         writer.writerows(rows)
 
@@ -115,12 +158,13 @@ def convert_csv_to_json(input_path,output_path=None):
         
     # Format spec:
     #
-    # https://github.com/microsoft/CameraTraps/tree/master/api/batch_processing
+    # https://github.com/ecologize/CameraTraps/tree/master/api/batch_processing
     
     print('Loading csv results...')
     df = load_api_results_csv(input_path)
 
     info = {
+        "format_version":"1.2",
         "detector": "unknown",
         "detection_completion_time" : "unknown",
         "classifier": "unknown",
@@ -180,10 +224,11 @@ if False:
 
     #%%
     
-    min_confidence = None
     input_path = r'c:\temp\test.json'
+    min_confidence = None
     output_path = input_path + '.csv'
-    convert_json_to_csv(input_path,output_path,min_confidence=min_confidence,omit_bounding_boxes=False)
+    convert_json_to_csv(input_path,output_path,min_confidence=min_confidence,
+                        omit_bounding_boxes=False)
             
     #%%
     
@@ -194,7 +239,8 @@ if False:
     min_confidence = None    
     for input_path in input_paths:
         output_path = input_path + '.csv'
-        convert_json_to_csv(input_path,output_path,min_confidence=min_confidence,omit_bounding_boxes=True)    
+        convert_json_to_csv(input_path,output_path,min_confidence=min_confidence,
+                            omit_bounding_boxes=True)    
     
     #%% Concatenate .csv files from a folder
 
@@ -234,10 +280,21 @@ if False:
 def main():
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('input_path')
-    parser.add_argument('output_path')
+    parser.add_argument('input_path',type=str,
+                        help='Input filename ending in .json or .csv')
+    parser.add_argument('--output_path',type=str,default=None,
+                        help='Output filename ending in .json or .csv (defaults to ' + \
+                            'input file, with .json/.csv replaced by .csv/.json)')
     args = parser.parse_args()
-
+    
+    if args.output_path is None:
+        if args.input_path.endswith('.csv'):
+            args.output_path = args.input_path[:-4] + '.json'
+        elif args.input_path.endswith('.json'):
+            args.output_path = args.input_path[:-5] + '.csv'
+        else:
+            raise ValueError('Illegal input file extension')    
+    
     if args.input_path.endswith('.csv') and args.output_path.endswith('.json'):
         convert_csv_to_json(args.input_path,args.output_path)
     elif args.input_path.endswith('.json') and args.output_path.endswith('.csv'):

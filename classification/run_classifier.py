@@ -42,8 +42,8 @@ class SimpleDataset(torch.utils.data.Dataset):
     """Very simple dataset."""
 
     def __init__(self, img_files: Sequence[str],
-                 images_dir: Optional[str] = None,
-                 transform: Optional[Callable[[PIL.Image.Image], Any]] = None):
+                 images_dir: str | None = None,
+                 transform: Callable[[PIL.Image.Image], Any] | None = None):
         """Creates a SimpleDataset."""
         self.img_files = img_files
         self.images_dir = images_dir
@@ -68,7 +68,7 @@ class SimpleDataset(torch.utils.data.Dataset):
 
 
 def create_loader(cropped_images_dir: str,
-                  detections_json_path: Optional[str],
+                  detections_json_path: str | None,
                   img_size: int,
                   batch_size: int,
                   num_workers: int
@@ -77,7 +77,11 @@ def create_loader(cropped_images_dir: str,
 
     Args:
         cropped_images_dir: str, path to image crops
-        detections: optional dict, detections JSON
+        detections_json_path: optional str, path to detections JSON
+        img_size: int, resizes smallest side of image to img_size,
+            then center-crops to (img_size, img_size)
+        batch_size: int, batch size in dataloader
+        num_workers: int, # of workers in dataloader
     """
     crop_files = []
 
@@ -95,12 +99,13 @@ def create_loader(cropped_images_dir: str,
         with open(detections_json_path, 'r') as f:
             js = json.load(f)
         detections = {img['file']: img for img in js['images']}
+        detector_version = js['info']['detector']
 
         for img_file, info_dict in tqdm(detections.items()):
             if 'detections' not in info_dict or info_dict['detections'] is None:
                 continue
             for i in range(len(info_dict['detections'])):
-                crop_filename = img_file + f'___crop{i:02d}_mdv4.1.jpg'
+                crop_filename = img_file + f'___crop{i:02d}_{detector_version}.jpg'
                 crop_path = os.path.join(cropped_images_dir, crop_filename)
                 if os.path.exists(crop_path):
                     crop_files.append(crop_filename)
@@ -126,14 +131,21 @@ def create_loader(cropped_images_dir: str,
 def main(model_path: str,
          cropped_images_dir: str,
          output_csv_path: str,
-         detections_json_path: Optional[str],
-         classifier_categories_json_path: Optional[str],
+         detections_json_path: str | None,
+         classifier_categories_json_path: str | None,
          img_size: int,
          batch_size: int,
-         num_workers: int) -> None:
+         num_workers: int,
+         device_id: int | None = None) -> None:
     """Main function."""
-    # evaluating with accimage is much faster than Pillow or Pillow-SIMD
-    tv.set_image_backend('accimage')
+    
+    # Evaluating with accimage is much faster than Pillow or Pillow-SIMD, but accimage
+    # is Linux-only.
+    try:
+        import accimage
+        tv.set_image_backend('accimage')
+    except:
+        print('Warning: could not start accimage backend (ignore this if you\'re not using Linux)')
 
     # create dataset
     print('Creating data loader')
@@ -150,7 +162,7 @@ def main(model_path: str,
     # create model
     print('Loading saved model')
     model = torch.jit.load(model_path)
-    model, device = train_classifier.prep_device(model)
+    model, device = train_classifier.prep_device(model, device_id=device_id)
 
     test_epoch(model, loader, device=device, label_names=label_names,
                output_csv_path=output_csv_path)
@@ -159,7 +171,7 @@ def main(model_path: str,
 def test_epoch(model: torch.nn.Module,
                loader: torch.utils.data.DataLoader,
                device: torch.device,
-               label_names: Optional[Sequence[str]],
+               label_names: Sequence[str] | None,
                output_csv_path: str) -> None:
     """Runs for 1 epoch.
 
@@ -227,6 +239,9 @@ def _parse_args() -> argparse.Namespace:
         '--batch-size', type=int, default=1,
         help='batch size for evaluating model')
     parser.add_argument(
+        '--device', type=int, default=None,
+        help='preferred CUDA device')
+    parser.add_argument(
         '--num-workers', type=int, default=8,
         help='# of workers for data loading')
     return parser.parse_args()
@@ -241,4 +256,5 @@ if __name__ == '__main__':
          classifier_categories_json_path=args.classifier_categories,
          img_size=args.image_size,
          batch_size=args.batch_size,
-         num_workers=args.num_workers)
+         num_workers=args.num_workers,
+         device_id=args.device)

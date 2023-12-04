@@ -11,11 +11,16 @@
 #%% Constants and imports
 
 from collections import defaultdict
+from tqdm import tqdm
+
 import json
 import os
+
 from typing import Dict, Mapping, Optional, Tuple
 
 import pandas as pd
+
+import ct_utils
 
 headers = ['image_path', 'max_confidence', 'detections']
 
@@ -78,19 +83,17 @@ def load_api_results(api_output_path: str, normalize_paths: bool = True,
 
     Returns:
         detection_results: pd.DataFrame, contains at least the columns:
-                ['file', 'max_detection_conf', 'detections','failure']            
-        other_fields: a dict containing fields in the dict
+                ['file', 'detections','failure']            
+        other_fields: a dict containing fields in the results other than 'images'
     """
     print('Loading API results from {}'.format(api_output_path))
 
     with open(api_output_path) as f:
         detection_results = json.load(f)
 
-    print('De-serializing API results')
-
-    # Sanity-check that this is really a detector output file
+    # Validate that this is really a detector output file
     for s in ['info', 'detection_categories', 'images']:
-        assert s in detection_results
+        assert s in detection_results, 'Missing field {} in detection results'.format(s)
 
     # Fields in the API output json other than 'images'
     other_fields = {}
@@ -104,23 +107,27 @@ def load_api_results(api_output_path: str, normalize_paths: bool = True,
             image['file'] = os.path.normpath(image['file'])
             # image['file'] = image['file'].replace('\\','/')
 
+    # Replace some path tokens to match local paths to original blob structure
+    if filename_replacements is not None:
+        for string_to_replace in filename_replacements.keys():
+            replacement_string = filename_replacements[string_to_replace]
+            for im in detection_results['images']:
+                im['file'] = im['file'].replace(string_to_replace,replacement_string)
+
+    print('Converting results to dataframe')
+    
+    # If this is a newer file that doesn't include maximum detection confidence values,
+    # add them, because our unofficial internal dataframe format includes this.
+    for im in detection_results['images']:
+        if 'max_detection_conf' not in im:
+            im['max_detection_conf'] = ct_utils.get_max_conf(im)
+    
     # Pack the json output into a Pandas DataFrame
     detection_results = pd.DataFrame(detection_results['images'])
+    
+        
 
-    # Replace some path tokens to match local paths to original blob structure
-    # string_to_replace = list(filename_replacements.keys())[0]
-    if filename_replacements is not None:
-        for string_to_replace in filename_replacements:
-
-            replacement_string = filename_replacements[string_to_replace]
-
-            for i_row in range(len(detection_results)):
-                row = detection_results.iloc[i_row]
-                fn = row['file']
-                fn = fn.replace(string_to_replace, replacement_string)
-                detection_results.at[i_row, 'file'] = fn
-
-    print('Finished loading and de-serializing API results for {} images from {}'.format(
+    print('Finished loading API results for {} images from {}'.format(
             len(detection_results),api_output_path))
 
     return detection_results, other_fields
@@ -186,7 +193,8 @@ def load_api_results_csv(filename, normalize_paths=True, filename_replacements={
             fn = fn.replace(string_to_replace,replacement_string)
             detection_results.at[iRow,'image_path'] = fn
 
-    print('Finished loading and de-serializing API results for {} images from {}'.format(len(detection_results),filename))
+    print('Finished loading and de-serializing API results for {} images from {}'.format(
+        len(detection_results),filename))
 
     return detection_results
 

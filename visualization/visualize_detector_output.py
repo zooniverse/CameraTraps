@@ -11,13 +11,14 @@ import json
 import os
 import random
 import sys
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from tqdm import tqdm
 
 from data_management.annotations.annotation_constants import (
     detector_bbox_category_id_to_name)  # here id is int
 from visualization import visualization_utils as vis_utils
+from ct_utils import get_max_conf
 
 
 #%% Constants
@@ -34,10 +35,15 @@ def visualize_detector_output(detector_output_path: str,
                               out_dir: str,
                               images_dir: str,
                               is_azure: bool = False,
-                              confidence: float = 0.8,
+                              confidence_threshold: float = 0.15,
                               sample: int = -1,
                               output_image_width: int = 700,
-                              random_seed: Optional[int] = None) -> List[str]:
+                              random_seed: Optional[int] = None,
+                              render_detections_only: bool = False,
+                              classification_confidence_threshold = 0.1,
+                              html_output_file=None,
+                              html_output_options=None) -> List[str]:
+    
     """Draw bounding boxes on images given the output of the detector.
 
     Args:
@@ -51,25 +57,24 @@ def visualize_detector_output(detector_output_path: str,
         output_image_width: int, width in pixels to resize images for display,
             set to -1 to use original image width
         random_seed: int, for deterministic image sampling when sample != -1
+        render_detections_only: bool, only render images with above-threshold detections
 
     Returns: list of str, paths to annotated images
     """
-    # arguments error checking
-    assert confidence > 0 and confidence < 1, (
-        f'Confidence threshold {confidence} is invalid, must be in (0, 1).')
+    
+    assert confidence_threshold >= 0 and confidence_threshold <= 1, (
+        f'Confidence threshold {confidence_threshold} is invalid, must be in (0, 1).')
 
     assert os.path.exists(detector_output_path), (
         f'Detector output file does not exist at {detector_output_path}.')
 
     if is_azure:
-        # we don't import sas_blob_utils at the top of this file in order to
-        # accommodate the MegaDetector Colab notebook which does not have
-        # the azure-storage-blob package installed
         import sas_blob_utils
     else:
         assert os.path.isdir(images_dir)
 
     os.makedirs(out_dir, exist_ok=True)
+
 
     #%% Load detector output
 
@@ -79,10 +84,11 @@ def visualize_detector_output(detector_output_path: str,
         'Detector output file should be a json with an "images" field.')
     images = detector_output['images']
 
-    detector_label_map = DEFAULT_DETECTOR_LABEL_MAP
     if 'detection_categories' in detector_output:
-        print('detection_categories provided')
+        print('Using custom label mapping')
         detector_label_map = detector_output['detection_categories']
+    else:
+        detector_label_map = DEFAULT_DETECTOR_LABEL_MAP        
 
     num_images = len(images)
     print(f'Detector output file contains {num_images} entries.')
@@ -103,20 +109,33 @@ def visualize_detector_output(detector_output_path: str,
 
     #%% Load images, annotate them and save
 
-    print('Rendering detections above a confidence threshold of {}...'.format(confidence))
+    print('Rendering detections above a confidence threshold of {}'.format(
+        confidence_threshold))
+    
     num_saved = 0
     annotated_img_paths = []
-    image_obj: Any  # str for local images, BytesIO for Azure images
-
+    failed_images = []
+    missing_images = []
+    
+    classification_label_map = None
+    
+    if 'classification_categories' in detector_output:
+        classification_label_map = detector_output['classification_categories']
+        
     for entry in tqdm(images):
+        
         image_id = entry['file']
 
-        if 'failure' in entry:
-            print(f'Skipping {image_id}, failure: "{entry["failure"]}"')
+        if 'failure' in entry and entry['failure'] is not None:
+            failed_images.append(image_id)
             continue
 
-        # max_conf = entry['max_detection_conf']
-
+        assert 'detections' in entry and entry['detections'] is not None
+        
+        max_conf = get_max_conf(entry)
+        if (max_conf < confidence_threshold) and render_detections_only:
+            continue
+        
         if is_azure:
             blob_uri = sas_blob_utils.build_blob_uri(
                 container_uri=images_dir, blob_name=image_id)
@@ -125,20 +144,23 @@ def visualize_detector_output(detector_output_path: str,
                 print(f'Image {image_id} not found in blob container '
                       f'{container}; skipped.')
                 continue
+            # BytesIO object
             image_obj, _ = sas_blob_utils.download_blob_to_stream(blob_uri)
         else:
             image_obj = os.path.join(images_dir, image_id)
             if not os.path.exists(image_obj):
-                print(f'Image {image_id} not found in images_dir; skipped.')
+                print(f'Image {image_id} not found in images_dir')
+                missing_images.append(image_id)
                 continue
 
-        # resize is for displaying them more quickly
         image = vis_utils.resize_image(
             vis_utils.open_image(image_obj), output_image_width)
 
         vis_utils.render_detection_bounding_boxes(
             entry['detections'], image, label_map=detector_label_map,
-            confidence_threshold=confidence)
+            classification_label_map = classification_label_map,
+            confidence_threshold=confidence_threshold,
+            classification_confidence_threshold=classification_confidence_threshold)
 
         for char in ['/', '\\', ':']:
             image_id = image_id.replace(char, '~')
@@ -148,11 +170,21 @@ def visualize_detector_output(detector_output_path: str,
         num_saved += 1
 
         if is_azure:
-            image_obj.close()  # BytesIO object
+            image_obj.close()
 
+    # ...for each image
+    
+    print('Skipped {} failed images (of {})'.format(len(failed_images),len(images)))
+    print('Skipped {} missing images (of {})'.format(len(missing_images),len(images)))
+    
     print(f'Rendered detection results on {num_saved} images, '
-          f'saved to {out_dir}.')
+          f'saved to {out_dir}')
 
+    if html_output_file is not None:
+        import write_html_image_list
+        write_html_image_list.write_html_image_list(html_output_file,annotated_img_paths,
+                                                    options=html_output_options)
+        
     return annotated_img_paths
 
 
@@ -173,7 +205,7 @@ def main() -> None:
         help='Path to directory where the annotated images will be saved. '
              'The directory will be created if it does not exist.')
     parser.add_argument(
-        '-c', '--confidence', type=float, default=0.8,
+        '-c', '--confidence', type=float, default=0.15,
         help='Value between 0 and 1, indicating the confidence threshold '
              'above which to visualize bounding boxes')
     parser.add_argument(
@@ -199,6 +231,10 @@ def main() -> None:
     parser.add_argument(
         '-r', '--random_seed', type=int, default=None,
         help='Integer, for deterministic order of image sampling')
+    parser.add_argument(
+        '-do', '--detections_only', action='store_true',
+        help='Only render images with above-threshold detections (by default, '
+             'both empty and non-empty images are rendered).')
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
@@ -213,7 +249,8 @@ def main() -> None:
         is_azure=args.is_azure,
         sample=args.sample,
         output_image_width=args.output_image_width,
-        random_seed=args.random_seed)
+        random_seed=args.random_seed,
+        render_detections_only=args.detections_only)
 
 
 if __name__ == '__main__':

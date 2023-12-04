@@ -99,17 +99,7 @@ namespace CameraTrapJsonManagerApp
                     if (options.MakeFolderRelative)
                         foldersToImages = MakeFoldersRelative(foldersToImages);
 
-                    var ext = System.IO.Path.GetExtension(outputFilename);
-                    string directory = outputFilename;
-                    if (ext != String.Empty)
-                    {
-                        directory = outputFilename.Replace("\\", "/");
-                        if (directory.Contains("/"))
-                            directory = outputFilename.Substring(0, outputFilename.LastIndexOf("/"));
-                        else
-                            directory = outputFilename;
-                    }
-                    Directory.CreateDirectory(directory);
+                    Directory.CreateDirectory(outputFilename);
 
                     var allImages = data.images;
 
@@ -202,11 +192,13 @@ namespace CameraTrapJsonManagerApp
                 if (!string.IsNullOrEmpty(options.Query) && !file.Contains(options.Query))
                     continue;
 
-                if (!string.IsNullOrEmpty(options.Replacement))
+                if (options.Replacement != null)
                 {
                     if (!string.IsNullOrEmpty(options.Query))
                         file = file.Replace(options.Query, options.Replacement);
                     else
+                        // If the query is empty and the replacement is non-null, prepend the replacement
+                        // to the filename.
                         file = options.Replacement + file;
                 }
                 percentage = SharedFunctions.GetProgressPercentage(count, totalCount);
@@ -260,11 +252,19 @@ namespace CameraTrapJsonManagerApp
                 if (progressPercentagesForDisplay.Contains(percentage))
                     SetLabelProgressMsg(progressMsg, count, totalCount, ProgressBarStyle.Blocks);
 
-                dynamic p;
-                dynamic pOrig = item.max_detection_conf;
                 List<Detection> detections = new List<Detection>();
 
                 // detections = [d for d in im['detections'] if d['conf'] >= options.confidence_threshold]
+
+                // Failed images have no detections array, always include them in the output
+                if (item.detections == null)
+                {
+                    imagesOut.Add(item);
+                    continue;
+                }
+
+                dynamic p;
+                dynamic pOrig = item.max_detection_conf;
 
                 // Find all detections above threshold for this image
                 foreach (var d in item.detections)
@@ -316,6 +316,8 @@ namespace CameraTrapJsonManagerApp
                 imagesOut.Add(item);
 
             } // for each image
+
+            if (imagesOut.Count != imagesIn.Count) { throw new Exception("Image array size mismatch"); }
 
             data.images = imagesOut;
 
@@ -616,10 +618,14 @@ namespace CameraTrapJsonManagerApp
                 {
                     Formatting = Formatting.Indented,
                     Indentation = 1,
-                    IndentChar = ' '
+                    IndentChar = ' ',
                 })
                 {
-                    (new JsonSerializer()).Serialize(jtw, data);
+                    JsonSerializer _serializer = new JsonSerializer
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+                    _serializer.Serialize(jtw, data);
                 }
             }
             catch (Exception ex)
