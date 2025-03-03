@@ -64,8 +64,6 @@ def open_image(input_file: Union[str, BytesIO]) -> Image:
     """
     if (isinstance(input_file, str)
             and input_file.startswith(('http://', 'https://'))):
-        response = requests.get(input_file)
-        image = Image.open(BytesIO(response.content))
         try:
             response = requests.get(input_file)
             image = Image.open(BytesIO(response.content))
@@ -166,9 +164,10 @@ class BatchScorer:
                 image = self._download_image(image_id)
             except Exception as e:
                 print(f'score_v5.py BatchScorer, score_images, download_image exception: {e}')
+                failure_code = getattr(self.detector, 'FAILURE_IMAGE_OPEN', 'Failed to open image')
                 result = {
                     'file': image_id,
-                    'failure': self.detector.FAILURE_IMAGE_OPEN
+                    'failure': failure_code
                 }
             else:
                 result = self.detector.generate_detections_one_image(
