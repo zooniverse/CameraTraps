@@ -49,7 +49,12 @@ class BatchJobManager:
         job = JobAddParameter(
             id=job_id,
             pool_info=PoolInformation(pool_id=pool_id),
-
+             user_identity = batchmodels.UserIdentity(
+               auto_user=batchmodels.AutoUserSpecification(
+                  scope=batchmodels.AutoUserScope.task,
+                  elevation_level=batchmodels.ElevationLevel.admin
+               )
+            ),
             # set for all tasks in the job
             common_environment_settings=[
                 EnvironmentSetting(name='DETECTOR_REL_PATH', value=detector_model_rel_path),
