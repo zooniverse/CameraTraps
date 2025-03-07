@@ -49,10 +49,10 @@ class BatchJobManager:
         job = JobAddParameter(
             id=job_id,
             pool_info=PoolInformation(pool_id=pool_id),
-             user_identity = batchmodels.UserIdentity(
-               auto_user=batchmodels.AutoUserSpecification(
-                  scope=batchmodels.AutoUserScope.task,
-                  elevation_level=batchmodels.ElevationLevel.admin
+             user_identity = UserIdentity(
+               auto_user=AutoUserSpecification(
+                  scope=AutoUserScope.task,
+                  elevation_level=ElevationLevel.admin
                )
             ),
             # set for all tasks in the job
