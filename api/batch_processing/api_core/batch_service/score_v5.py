@@ -164,10 +164,9 @@ class BatchScorer:
                 image = self._download_image(image_id)
             except Exception as e:
                 print(f'score_v5.py BatchScorer, score_images, download_image exception: {e}')
-                failure_code = getattr(self.detector, 'FAILURE_IMAGE_OPEN', 'Failed to open image')
                 result = {
                     'file': image_id,
-                    'failure': failure_code
+                    'failure': self.detector.FAILURE_IMAGE_OPEN
                 }
             else:
                 result = self.detector.generate_detections_one_image(
