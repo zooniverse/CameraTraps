@@ -36,6 +36,8 @@ print(f'Using PyTorch version {torch.__version__}')
 
 class PTDetector:
 
+    FAILURE_IMAGE_OPEN = 'Failure image access'
+
     IMAGE_SIZE = 1280  # image size used in training
     STRIDE = 64
 
